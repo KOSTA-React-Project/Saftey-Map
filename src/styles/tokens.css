@@ -1,0 +1,61 @@
+/* 디자인 토큰 — 13-design-system 기준. 색상·크기는 여기 변수로만 사용 */
+:root {
+  /* 색상 */
+  --color-primary: #176b55;
+  --color-primary-soft: #e6f0eb;
+  --color-text: #19332f;
+  --color-secondary: #687c77;
+  --color-community: #b8692f;
+  --color-point-a: #176b55;
+  --color-point-b: #4267a1;
+  --color-surface: #f5f7f3;
+  --color-white: #ffffff;
+  --color-border: #e3e8e3;
+  --color-map-placeholder: #e4eae2;
+
+  /* 범죄주의구간 등급 (임시값 · 공식 범례 확인 후 교체) */
+  --color-grade-1: #f3e6b5;
+  --color-grade-2: #ebd58e;
+  --color-grade-3: #e5c46f;
+  --color-grade-4: #e2b25e;
+  --color-grade-5: #dc9d4e;
+  --color-grade-6: #d4864a;
+  --color-grade-7: #c77245;
+  --color-grade-8: #b65e3e;
+  --color-grade-9: #a04a38;
+  --color-grade-10: #883a33;
+
+  /* 타이포그래피 */
+  --font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 32px;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  /* 간격 (8px 단위) */
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-40: 40px;
+  --space-48: 48px;
+
+  /* 모서리 */
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  /* 레이아웃 */
+  --header-height: 80px;
+  --sidebar-width: 380px;
+  --touch-target: 44px;
+}
