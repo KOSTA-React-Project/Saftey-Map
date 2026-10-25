@@ -42,8 +42,8 @@ npm run build   # 프로덕션 빌드
 | 담당 | 화면 | 파일 |
 |---|---|---|
 | ImHyungsuk | 지도 탐색 메인, 로그인, 회원가입, 공통 레이아웃·디자인 | `ExplorePage`, `LoginPage`, `SignupPage`, `layouts/`, `components/` |
-| 팀원 A | 두 지역 비교(지점 선택, 결과), 운영 | `CompareSetupPage`, `CompareResultPage`, `AdminPage` |
-| 팀원 B | 안심노트(상세, 작성), 정책 | `NoteDetailPage`, `NoteComposePage`, `PolicyPage` |
+| joohyosung | 두 지역 비교(지점 선택, 결과), 운영 | `CompareSetupPage`, `CompareResultPage`, `AdminPage` |
+| yusin-bit | 안심노트(상세, 작성), 정책 | `NoteDetailPage`, `NoteComposePage`, `PolicyPage` |
 
 ## 컨벤션
 
