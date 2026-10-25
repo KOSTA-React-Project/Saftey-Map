@@ -21,7 +21,7 @@
 - React 19 + Vite
 - React Router
 - CSS Modules + 디자인 토큰(`src/styles/tokens.css`)
-- 지도: Kakao Map (연동 예정)
+- 지도: Kakao Maps JavaScript SDK (라이브러리 없이 직접 사용)
 - 데이터: 공공데이터포털 API
 
 ## 실행 방법
@@ -34,7 +34,7 @@ npm run format  # Prettier로 코드 정리
 npm run build   # 프로덕션 빌드
 ```
 
-- 프로젝트 루트에 `.env`를 만들고 팀에서 공유한 API 키를 넣는다.
+- `.env.example`을 복사해 `.env`를 만들고 팀에서 공유한 API 키를 넣는다.
 - VS Code로 열면 추천 확장(Prettier)을 설치하라는 알림이 뜬다. 설치 후 **Format On Save**를 켜면 저장할 때 자동 정리된다.
 
 ## 역할 분담
@@ -79,6 +79,42 @@ npm run build   # 프로덕션 빌드
 
 // App.jsx의 MapLayout 안에 라우트 한 줄 추가
 <Route path="compare" element={<CompareSetupPage />} />
+```
+
+**지도 컴포넌트** (`src/components/map/`, `src/hooks/useMap.js`)
+
+| 이름 | 하는 일 | 주요 props |
+|---|---|---|
+| `MapView` | 카카오 지도. 확대·축소·내 위치 버튼 포함 | `center`, `level`(처음 위치), `onClick`, `interactive`, `showControls`, `className` |
+| `MapMarker` | 지도 위 마커 | `type`(`'A'`·`'B'`·`'note'`·`'new'`), `position`, `onClick` |
+| `MapRadius` | 반경 점선 원 | `center`, `radius`(m) |
+| `useMapClick(fn)` | 지도를 누르면 `fn({ lat, lng })` 호출 (MapLayout 화면용) | |
+| `useMapCenter(position)` | `position`이 바뀌면 지도 중심 이동 (MapLayout 화면용) | |
+
+- 좌표는 항상 `{ lat, lng }` 형태로 쓴다.
+- **지도 화면(MapLayout) 페이지**는 지도를 직접 만들지 않는다. 페이지에 `MapMarker` 등을 쓰면 레이아웃 지도에 붙고, 페이지를 이동해도 지도는 유지된다.
+
+```jsx
+function CompareSetupPage() {
+  const [pointB, setPointB] = useState(null)
+  useMapClick(setPointB)
+
+  return (
+    <>
+      <Sidebar>...</Sidebar>
+      <MapMarker type="B" position={pointB} />
+      <MapRadius center={pointB} radius={1000} />
+    </>
+  )
+}
+```
+
+- **그 밖의 화면**(비교 결과, 노트 작성 등)은 `MapView`를 직접 두고 그 안에 넣는다. 크기는 `className`으로, 클릭은 `onClick`으로 받는다.
+
+```jsx
+<MapView className={styles.pickerMap} center={START} onClick={setPosition}>
+  <MapMarker type="new" position={position} />
+</MapView>
 ```
 
 ### 스타일

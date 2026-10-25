@@ -1,0 +1,24 @@
+.mapView {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-map-placeholder);
+}
+
+/* z-index로 쌓임 맥락을 만들어 지도 내부 요소가 버튼 위로 올라오지 않게 함 */
+.canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-24);
+  font-size: var(--font-size-sm);
+  color: var(--color-secondary);
+  text-align: center;
+}
