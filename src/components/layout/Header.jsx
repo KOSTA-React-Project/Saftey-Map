@@ -12,11 +12,7 @@ function Header() {
   return (
     <header className={styles.header}>
       <Link to={ROUTES.EXPLORE} className={styles.logo}>
-        <svg
-          className={styles.logoIcon}
-          viewBox="0 0 24 30"
-          aria-hidden="true"
-        >
+        <svg className={styles.logoIcon} viewBox="0 0 24 30" aria-hidden="true">
           <path d="M12 0C5.4 0 0 5.3 0 11.8 0 20.6 12 30 12 30s12-9.4 12-18.2C24 5.3 18.6 0 12 0Z" />
           <circle cx="12" cy="11.5" r="4.5" fill="var(--color-white)" />
         </svg>
