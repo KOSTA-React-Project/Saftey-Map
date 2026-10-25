@@ -1,0 +1,90 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  height: var(--header-height);
+  padding: 0 var(--space-40);
+  background: var(--color-white);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  justify-self: start;
+  font-size: 22px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.logoIcon {
+  width: 22px;
+  height: 28px;
+  fill: var(--color-primary);
+}
+
+.nav {
+  display: flex;
+  align-self: stretch;
+  gap: var(--space-40);
+}
+
+/* 밑줄이 헤더 하단에 붙도록 높이를 꽉 채움 */
+.navItem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-12);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-secondary);
+}
+
+.navItem:hover {
+  color: var(--color-text);
+}
+
+.active {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+}
+
+.active:hover {
+  color: var(--color-primary);
+}
+
+.active::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 3px;
+  background: var(--color-primary);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-12);
+  justify-self: end;
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  height: var(--touch-target);
+  padding: 0 var(--space-24);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.actionButton:hover {
+  background: var(--color-surface);
+}

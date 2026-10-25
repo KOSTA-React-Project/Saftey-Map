@@ -1,0 +1,27 @@
+.mapLayout {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  height: calc(100dvh - var(--header-height));
+}
+
+.sidebarSlot {
+  min-height: 0;
+}
+
+.mapArea {
+  min-width: 0;
+  min-height: 0;
+  padding: var(--space-16);
+}
+
+/* 카카오맵 연결 전 자리 표시 */
+.map {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-secondary);
+  background: var(--color-map-placeholder);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
