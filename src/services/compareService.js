@@ -39,7 +39,7 @@ export async function comparePlaces(
   if (
     !isValidPosition(conditions.A) ||
     !isValidPosition(conditions.B) ||
-    ![500, 1000, 2000].includes(conditions.radius)
+    ![500, 1000].includes(conditions.radius)
   )
     throw new Error('두 지점과 공통 반경을 확인해 주세요.')
   const snapshot = structuredClone(conditions)
