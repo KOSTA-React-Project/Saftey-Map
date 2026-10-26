@@ -36,11 +36,23 @@ export class ApiError extends Error {
 function readAll() {
   const saved = localStorage.getItem(STORAGE_KEY)
   if (saved == null) return []
+  let notes
   try {
-    return JSON.parse(saved)
+    notes = JSON.parse(saved)
   } catch {
+    notes = null
+  }
+  if (!Array.isArray(notes)) {
     throw new ApiError(500, '저장된 안심노트를 읽을 수 없습니다.')
   }
+  return notes
+}
+
+// YYYY-MM-DD 형식이고 실제 있는 날짜인지 (2026-02-31 같은 값은 거부)
+function isValidDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const date = new Date(`${value}T00:00:00Z`)
+  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value)
 }
 
 // 사용자 지역 기준 오늘 날짜 (YYYY-MM-DD)
@@ -99,6 +111,8 @@ export function validateNote({
     errors.push(`태그는 ${TAG_MAX}자 이하로 입력하세요.`)
 
   if (!observedDate) errors.push('관찰 날짜를 선택하세요.')
+  else if (!isValidDate(observedDate))
+    errors.push('관찰 날짜가 올바르지 않습니다.')
   else if (observedDate > getLocalToday())
     errors.push('관찰 날짜는 오늘 이후로 선택할 수 없습니다.')
 
@@ -130,7 +144,12 @@ export async function createNote(input) {
 
   const notes = readAll()
   const note = {
-    id: notes.reduce((max, n) => Math.max(max, n.id), 0) + 1,
+    // id가 정수가 아닌 기록은 건너뛰어 NaN이 되지 않게 함
+    id:
+      notes.reduce(
+        (max, n) => (Number.isInteger(n?.id) ? Math.max(max, n.id) : max),
+        0,
+      ) + 1,
     authorId: null, // 로그인 연동 후 세션의 회원 ID로 채운다 (입력값으로 받지 않음)
     title: input.title.trim(),
     observedDate: input.observedDate,
