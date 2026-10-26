@@ -29,9 +29,8 @@ const SECTIONS = [
   },
 ]
 
-const SAFEMAP_URL =
-  'https://www.safemap.go.kr/opna/data/dataViewRenew.do?objtId=205'
-const OFFENDER_URL = 'https://www.data.go.kr/data/15131846/openapi.do'
+const SAFEMAP_URL = 'https://www.safemap.go.kr'
+const OFFENDER_URL = 'https://www.sexoffender.go.kr'
 
 const FOOTER_ITEMS = [
   {
@@ -39,12 +38,14 @@ const FOOTER_ITEMS = [
     text: (
       <>
         <a href={SAFEMAP_URL} target="_blank" rel="noopener noreferrer">
-          생활안전지도 범죄주의구간(전체)
-        </a>
+          행정안전부 생활안전지도
+        </a>{' '}
+        — 범죄주의구간 정보
         <br />
         <a href={OFFENDER_URL} target="_blank" rel="noopener noreferrer">
-          성평등가족부 성범죄자 공개 및 고지 도로명 주소 정보 (공공데이터포털)
-        </a>
+          성범죄자 알림e
+        </a>{' '}
+        — 성범죄자 공개 및 고지 정보
         <br />
         성범죄자 정보는 지역별 집계 참고용이며, 위험도 점수와 합산하지 않습니다.
         <br />
@@ -61,11 +62,11 @@ const FOOTER_ITEMS = [
     text: (
       <>
         <a href={SAFEMAP_URL} target="_blank" rel="noopener noreferrer">
-          생활안전지도 공식 안내 바로가기
+          생활안전지도 바로가기
         </a>
         <br />
         <a href={OFFENDER_URL} target="_blank" rel="noopener noreferrer">
-          공공데이터포털 공식 안내 바로가기
+          성범죄자 알림e 바로가기
         </a>
       </>
     ),
