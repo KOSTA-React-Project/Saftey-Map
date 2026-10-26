@@ -16,7 +16,7 @@ function Header() {
           <path d="M12 0C5.4 0 0 5.3 0 11.8 0 20.6 12 30 12 30s12-9.4 12-18.2C24 5.3 18.6 0 12 0Z" />
           <circle cx="12" cy="11.5" r="4.5" fill="var(--color-white)" />
         </svg>
-        우리동네 안심노트
+        우리동네 안심지도
       </Link>
 
       <nav className={styles.nav}>
