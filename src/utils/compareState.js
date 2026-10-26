@@ -22,7 +22,11 @@ export function isValidPosition(point) {
 export function compareReducer(state, action) {
   switch (action.type) {
     case 'edit':
-      return { ...state, editing: action.slot }
+      return {
+        ...state,
+        editing: action.slot,
+        status: state.status === 'loading' ? 'idle' : state.status,
+      }
     case 'select': {
       if (!isValidPosition(action.position)) return state
       const slot = state.editing ?? (state.A ? 'B' : 'A')
