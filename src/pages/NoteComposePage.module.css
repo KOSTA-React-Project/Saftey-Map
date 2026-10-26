@@ -184,11 +184,6 @@
   border: 1px solid var(--color-border);
 }
 
-.secondaryButton:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
 /* 좁은 화면: 폼과 지도를 위아래로 */
 @media (max-width: 768px) {
   .page {
