@@ -1,4 +1,10 @@
-import { useId, useRef, useState } from 'react'
+import {
+  useCallback,
+  useId,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react'
 import { searchPlaces } from '../../utils/placeSearch.js'
 import styles from './PlaceSearchBox.module.css'
 
@@ -6,6 +12,7 @@ import styles from './PlaceSearchBox.module.css'
 // value·onValueChange를 주면 입력값을 바깥에서 관리 (예: 고른 위치의 주소 표시)
 // selectFirst면 검색하자마자 첫 결과를 고르고, 나머지 후보는 목록으로 남김
 function PlaceSearchBox({
+  ref,
   onSelect,
   value,
   onValueChange,
@@ -22,8 +29,18 @@ function PlaceSearchBox({
 
   const query = value ?? innerQuery
 
-  const setQuery = (next) => {
+  // 지도 클릭처럼 입력 바깥에서 위치를 고를 때도 진행 중인 검색을 무효화한다.
+  const cancelSearch = useCallback(() => {
     requestRef.current += 1
+    setStatus('idle')
+    setResults([])
+    setMessage('')
+  }, [])
+
+  useImperativeHandle(ref, () => ({ cancelSearch }), [cancelSearch])
+
+  const setQuery = (next) => {
+    cancelSearch()
     if (onValueChange) onValueChange(next)
     else setInnerQuery(next)
   }
@@ -37,10 +54,7 @@ function PlaceSearchBox({
     setResults([])
     try {
       const found = await searchPlaces(keyword)
-      if (requestId !== requestRef.current) {
-        setStatus('idle')
-        return
-      }
+      if (requestId !== requestRef.current) return
       setStatus('done')
       setMessage(found.length === 0 ? '검색 결과가 없어요.' : '')
       if (selectFirst && found.length > 0) {
@@ -50,10 +64,7 @@ function PlaceSearchBox({
         setResults(found)
       }
     } catch (err) {
-      if (requestId !== requestRef.current) {
-        setStatus('idle')
-        return
-      }
+      if (requestId !== requestRef.current) return
       setStatus('done')
       setMessage(err.message)
     }

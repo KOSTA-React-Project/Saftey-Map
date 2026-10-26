@@ -44,9 +44,11 @@ function NoteComposePage() {
   const [searched, setSearched] = useState(null)
   // 위치를 연달아 고를 때 늦게 온 주소 조회 결과를 버리기 위한 요청 번호
   const addressRequestRef = useRef(0)
+  const searchRef = useRef(null)
   const [errors, setErrors] = useState([])
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const isLocating = location != null && location.address === undefined
 
   // TODO: 로그인 기능 완성 후, 로그인하지 않았으면 안내문을 띄우고 로그인 페이지로 이동
 
@@ -64,14 +66,19 @@ function NoteComposePage() {
   // fallbackAddress: 주소 조회가 실패하면 대신 쓸 주소 (검색 결과의 주소)
   const pickLocation = ({ lat, lng }, fallbackAddress = null) => {
     const requestId = ++addressRequestRef.current
-    setLocation({ lat, lng, address: undefined })
-    setLocationQuery('주소 확인 중…')
+    setLocation({ lat, lng, address: fallbackAddress ?? undefined })
+    setLocationQuery(fallbackAddress ?? '주소 확인 중…')
     getAddress({ lat, lng }).then((found) => {
       if (requestId !== addressRequestRef.current) return
-      const address = found ?? fallbackAddress
+      const address = found ?? fallbackAddress ?? UNKNOWN_ADDRESS
       setLocation({ lat, lng, address })
-      setLocationQuery(address ?? UNKNOWN_ADDRESS)
+      setLocationQuery(address)
     })
+  }
+
+  const handleMapPick = (position) => {
+    searchRef.current?.cancelSearch()
+    pickLocation(position)
   }
 
   const handleSearchSelect = ({ lat, lng, address }) => {
@@ -89,6 +96,10 @@ function NoteComposePage() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (submitting) return
+    if (isLocating) {
+      setErrors(['위치 주소를 확인하고 있어요. 잠시 후 다시 등록해주세요.'])
+      return
+    }
     const input = {
       ...form,
       latitude: location?.lat,
@@ -180,6 +191,7 @@ function NoteComposePage() {
           <div className={styles.field}>
             <span className={styles.fieldLabel}>위치 *</span>
             <PlaceSearchBox
+              ref={searchRef}
               value={locationQuery}
               onValueChange={handleLocationQueryChange}
               onSelect={handleSearchSelect}
@@ -243,7 +255,7 @@ function NoteComposePage() {
             <button
               type="submit"
               className={styles.primaryButton}
-              disabled={submitting}
+              disabled={submitting || isLocating}
             >
               {submitting ? '등록 중…' : '공개 안심노트 등록'}
             </button>
@@ -251,7 +263,7 @@ function NoteComposePage() {
         </form>
 
         <div className={styles.side}>
-          <MapView className={styles.map} onClick={pickLocation}>
+          <MapView className={styles.map} onClick={handleMapPick}>
             {approvedNotes.map((note) => (
               <MapMarker
                 key={note.id}
