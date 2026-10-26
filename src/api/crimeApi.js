@@ -1,12 +1,16 @@
+import { CRIME_LAYER } from '../constants/crimeTypes.js'
+
 const WMS_URL = 'https://www.safemap.go.kr/openapi2/IF_0087_WMS'
 const SAFEMAP_KEY = import.meta.env.VITE_SAFEMAP_KEY
 
 export const hasSafemapKey = Boolean(SAFEMAP_KEY)
 
-// 생활안전지도 범죄주의구간 WMS 그림 주소 (bbox: EPSG:5181, size: px)
-export function getCrimeImageUrl(bbox, size) {
+// 생활안전지도 범죄주의구간 WMS 그림 주소 (bbox: EPSG:5181, size: px, style: 유형별 스타일)
+export function getCrimeImageUrl(bbox, size, style) {
   const params = new URLSearchParams({
     serviceKey: SAFEMAP_KEY,
+    layers: CRIME_LAYER,
+    styles: style,
     srs: 'EPSG:5181',
     bbox: bbox.join(','),
     format: 'image/png',

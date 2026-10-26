@@ -1,33 +1,78 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router'
+import { ROUTES } from '../constants/routes.js'
 import Sidebar from '../components/layout/Sidebar.jsx'
 import MapMarker from '../components/map/MapMarker.jsx'
-import MapRadius from '../components/map/MapRadius.jsx'
-import { useMapClick } from '../hooks/useMap.js'
+import PlaceSearchBox from '../components/search/PlaceSearchBox.jsx'
+import { useMapCenter } from '../hooks/useMap.js'
+import { useCrimeType } from '../hooks/useCrimeType.js'
+import { CRIME_TYPES, DEFAULT_CRIME_TYPE } from '../constants/crimeTypes.js'
+import { getApprovedNotes } from '../api/notesApi.js'
+import styles from './ExplorePage.module.css'
 
-// 임시 예시 데이터 — 지도 컴포넌트 확인용
-const SAMPLE_POINT_B = { lat: 37.5547, lng: 126.9707 }
-const SAMPLE_NOTES = [
-  { id: 1, lat: 37.5688, lng: 126.9822 },
-  { id: 2, lat: 37.5641, lng: 126.9752 },
-]
-
+// 01 지도 탐색 — 주소·장소 검색, 범죄 유형 필터, 승인된 안심노트 표시
 function ExplorePage() {
-  const [pointA, setPointA] = useState({ lat: 37.5665, lng: 126.978 })
+  const navigate = useNavigate()
+  const [notes, setNotes] = useState([])
+  const [place, setPlace] = useState(null)
+  const { crimeType, setCrimeType } = useCrimeType()
 
-  useMapClick(setPointA)
+  // 검색한 위치로 지도 이동
+  useMapCenter(place)
+
+  // 필터는 이 화면에서만 쓰므로, 다른 탭으로 가면 전체로 되돌림
+  useEffect(() => () => setCrimeType(DEFAULT_CRIME_TYPE), [setCrimeType])
+
+  useEffect(() => {
+    getApprovedNotes()
+      .then(setNotes)
+      .catch(() => setNotes([]))
+  }, [])
 
   return (
     <>
       <Sidebar>
-        <h2>이사할 동네, 같은 기준으로 살펴봐요</h2>
-        <p>지도를 누르면 A 지점과 반경 500m가 옮겨져요. (지도 확인용 예시)</p>
+        <h2 className={styles.title}>이사할 동네, 같은 기준으로 살펴봐요</h2>
+        <p className={styles.label}>주소·장소 검색</p>
+        <PlaceSearchBox onSelect={setPlace} />
+        {place && (
+          <p className={styles.selected}>
+            <strong>{place.label}</strong>
+            {place.address !== place.label && <span>{place.address}</span>}
+          </p>
+        )}
+
+        <div className={styles.sectionHeader}>
+          <h3 className={styles.sectionTitle}>범죄 유형</h3>
+          <span className={styles.sectionNote}>공공데이터</span>
+        </div>
+        <div
+          className={styles.typeGrid}
+          role="radiogroup"
+          aria-label="범죄 유형"
+        >
+          {CRIME_TYPES.map(({ id, label }) => (
+            <button
+              key={id}
+              type="button"
+              role="radio"
+              aria-checked={crimeType === id}
+              className={`${styles.typeButton} ${crimeType === id ? styles.typeSelected : ''}`}
+              onClick={() => setCrimeType(id)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </Sidebar>
-      <MapMarker type="A" position={pointA} />
-      <MapMarker type="B" position={SAMPLE_POINT_B} />
-      {SAMPLE_NOTES.map((note) => (
-        <MapMarker key={note.id} type="note" position={note} />
+      {notes.map((note) => (
+        <MapMarker
+          key={note.id}
+          type="note"
+          position={{ lat: note.latitude, lng: note.longitude }}
+          onClick={() => navigate(`${ROUTES.NOTES}/${note.id}`)}
+        />
       ))}
-      <MapRadius center={pointA} radius={500} />
     </>
   )
 }
