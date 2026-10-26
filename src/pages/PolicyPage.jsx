@@ -43,7 +43,7 @@ const FOOTER_ITEMS = [
         — 범죄주의구간 정보
         <br />
         <a href={OFFENDER_URL} target="_blank" rel="noopener noreferrer">
-          성범죄자 알림e
+          성평등가족부 성범죄자 알림e
         </a>{' '}
         — 성범죄자 공개 및 고지 정보
         <br />
