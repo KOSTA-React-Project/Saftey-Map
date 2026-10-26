@@ -28,3 +28,8 @@ CLAUDE.md
 
 # 환경 변수
 .env
+
+# 로컬 개발 기록과 테스트
+/docs/
+/tests/
+.gitignore
