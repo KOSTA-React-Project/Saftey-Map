@@ -1,7 +1,11 @@
 import { Route, Routes } from 'react-router'
+import { ROUTES } from './constants/routes.js'
 import RootLayout from './layouts/RootLayout.jsx'
 import MapLayout from './layouts/MapLayout.jsx'
 import ExplorePage from './pages/ExplorePage.jsx'
+import NotePage from './pages/NotePage.jsx'
+import NoteDetailPage from './pages/NoteDetailPage.jsx'
+import NoteComposePage from './pages/NoteComposePage.jsx'
 
 function App() {
   return (
@@ -10,7 +14,10 @@ function App() {
         {/* 사이드바 + 지도 화면 */}
         <Route element={<MapLayout />}>
           <Route index element={<ExplorePage />} />
+          <Route path={ROUTES.NOTES} element={<NotePage />} />
+          <Route path={`${ROUTES.NOTES}/:id`} element={<NoteDetailPage />} />
         </Route>
+        <Route path={`${ROUTES.NOTES}/new`} element={<NoteComposePage />} />
       </Route>
     </Routes>
   )
