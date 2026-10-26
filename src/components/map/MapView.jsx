@@ -25,7 +25,7 @@ function loadKakaoSdk() {
       return
     }
 
-    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${key}&autoload=false`
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${key}&autoload=false&libraries=services`
     script.onload = () => {
       if (!window.kakao?.maps?.load) {
         fail(
