@@ -6,6 +6,7 @@ import ExplorePage from './pages/ExplorePage.jsx'
 import NotePage from './pages/NotePage.jsx'
 import NoteDetailPage from './pages/NoteDetailPage.jsx'
 import NoteComposePage from './pages/NoteComposePage.jsx'
+import PolicyPage from './pages/PolicyPage.jsx'
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route path={`${ROUTES.NOTES}/:id`} element={<NoteDetailPage />} />
         </Route>
         <Route path={`${ROUTES.NOTES}/new`} element={<NoteComposePage />} />
+        <Route path={ROUTES.POLICY} element={<PolicyPage />} />
       </Route>
     </Routes>
   )
