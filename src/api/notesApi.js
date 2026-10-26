@@ -32,12 +32,22 @@ export class ApiError extends Error {
   }
 }
 
+// 저장 값이 없으면 빈 목록. 깨져 있으면 덮어쓰지 않도록 오류로 알린다.
 function readAll() {
+  const saved = localStorage.getItem(STORAGE_KEY)
+  if (saved == null) return []
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) ?? []
+    return JSON.parse(saved)
   } catch {
-    return []
+    throw new ApiError(500, '저장된 안심노트를 읽을 수 없습니다.')
   }
+}
+
+// 사용자 지역 기준 오늘 날짜 (YYYY-MM-DD)
+export function getLocalToday() {
+  const now = new Date()
+  const offset = now.getTimezoneOffset() * 60 * 1000
+  return new Date(now.getTime() - offset).toISOString().slice(0, 10)
 }
 
 function writeAll(notes) {
@@ -89,7 +99,7 @@ export function validateNote({
     errors.push(`태그는 ${TAG_MAX}자 이하로 입력하세요.`)
 
   if (!observedDate) errors.push('관찰 날짜를 선택하세요.')
-  else if (observedDate > new Date().toISOString().slice(0, 10))
+  else if (observedDate > getLocalToday())
     errors.push('관찰 날짜는 오늘 이후로 선택할 수 없습니다.')
 
   if (!trimmedContent) errors.push('상세 내용을 입력하세요.')
@@ -114,7 +124,7 @@ export function validateNote({
   return errors
 }
 
-export function createNote(input) {
+export async function createNote(input) {
   const errors = validateNote(input)
   if (errors.length > 0) return fail(400, errors.join(' '))
 
@@ -137,7 +147,7 @@ export function createNote(input) {
 }
 
 // 공개 목록 — 로그인 검사 없음, APPROVED만 반환
-export function getApprovedNotes() {
+export async function getApprovedNotes() {
   return respond(
     readAll()
       .filter((n) => n.status === NOTE_STATUS.APPROVED)
@@ -146,7 +156,7 @@ export function getApprovedNotes() {
 }
 
 // 공개 상세 — 승인되지 않은 글은 ID를 알아도 열 수 없다
-export function getApprovedNote(id) {
+export async function getApprovedNote(id) {
   const note = readAll().find(
     (n) => n.id === Number(id) && n.status === NOTE_STATUS.APPROVED,
   )
@@ -156,11 +166,11 @@ export function getApprovedNote(id) {
   return respond(publicNote)
 }
 
-export function getNotesForAdmin(status = NOTE_STATUS.PENDING) {
+export async function getNotesForAdmin(status = NOTE_STATUS.PENDING) {
   return respond(readAll().filter((n) => n.status === status))
 }
 
-export function updateNoteStatus(id, nextStatus) {
+export async function updateNoteStatus(id, nextStatus) {
   if (
     nextStatus !== NOTE_STATUS.APPROVED &&
     nextStatus !== NOTE_STATUS.REJECTED

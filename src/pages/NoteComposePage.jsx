@@ -9,6 +9,7 @@ import {
   TITLE_MAX,
   createNote,
   getApprovedNotes,
+  getLocalToday,
   validateNote,
 } from '../api/notesApi.js'
 import { getAddress } from '../utils/geocoder.js'
@@ -36,6 +37,7 @@ function NoteComposePage() {
   const navigate = useNavigate()
   const [form, setForm] = useState(EMPTY_FORM)
   const [approvedNotes, setApprovedNotes] = useState([])
+  const [map, setMap] = useState(null)
   const [candidate, setCandidate] = useState(null)
   const [confirmed, setConfirmed] = useState(null)
   const [errors, setErrors] = useState([])
@@ -64,6 +66,11 @@ function NoteComposePage() {
           : current,
       ),
     )
+  }
+
+  const pickMapCenter = () => {
+    const center = map.getCenter()
+    pickCandidate({ lat: center.getLat(), lng: center.getLng() })
   }
 
   const handleSubmit = async (e) => {
@@ -154,7 +161,7 @@ function NoteComposePage() {
                 name="observedDate"
                 value={form.observedDate}
                 onChange={handleChange}
-                max={new Date().toISOString().slice(0, 10)}
+                max={getLocalToday()}
               />
             </label>
             <label className={styles.field}>
@@ -229,7 +236,11 @@ function NoteComposePage() {
         </form>
 
         <div className={styles.side}>
-          <MapView className={styles.map} onClick={pickCandidate}>
+          <MapView
+            className={styles.map}
+            onClick={pickCandidate}
+            onCreate={setMap}
+          >
             {approvedNotes.map((note) => (
               <MapMarker
                 key={note.id}
@@ -248,6 +259,15 @@ function NoteComposePage() {
               선택한 위치:{' '}
               {candidate ? describeLocation(candidate) : '아직 선택하지 않음'}
             </p>
+            {/* 키보드 사용자용: 확대·축소, 내 위치 버튼으로 지도를 옮긴 뒤 가운데를 선택 */}
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              onClick={pickMapCenter}
+              disabled={!map}
+            >
+              지도 가운데를 후보로 선택
+            </button>
             <button
               type="button"
               className={styles.primaryButton}
