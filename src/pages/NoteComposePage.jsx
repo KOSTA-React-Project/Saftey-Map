@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { ROUTES } from '../constants/routes.js'
 import MapView from '../components/map/MapView.jsx'
@@ -27,30 +27,28 @@ const EMPTY_FORM = {
 
 const UNKNOWN_ADDRESS = '주소를 확인할 수 없는 위치'
 
-// 좌표는 화면에 보여주지 않고 주소로만 표시. address가 undefined면 확인 중
-function describeLocation({ address }) {
-  if (address === undefined) return '주소 확인 중…'
-  return address ?? UNKNOWN_ADDRESS
-}
-
 // MapView 안에서 검색한 위치로 지도 중심을 옮김
 function CenterOn({ position }) {
   useMapCenter(position)
   return null
 }
 
-// 안심노트 작성 — 왼쪽 폼, 오른쪽 지도 + 위치 지정 카드
-// 지도에서 누른 지점은 후보이고, [이 위치로 지정]을 눌러야 폼에 들어감
+// 안심노트 작성 — 왼쪽 폼, 오른쪽 지도
+// 위치 칸에서 검색하거나 지도를 누르면 바로 위치가 정해짐 (좌표는 저장용, 화면엔 주소만)
 function NoteComposePage() {
   const navigate = useNavigate()
   const [form, setForm] = useState(EMPTY_FORM)
   const [approvedNotes, setApprovedNotes] = useState([])
-  const [candidate, setCandidate] = useState(null)
+  const [location, setLocation] = useState(null)
+  const [locationQuery, setLocationQuery] = useState('')
   const [searched, setSearched] = useState(null)
-  const [confirmed, setConfirmed] = useState(null)
+  // 위치를 연달아 고를 때 늦게 온 주소 조회 결과를 버리기 위한 요청 번호
+  const addressRequestRef = useRef(0)
+  const searchRef = useRef(null)
   const [errors, setErrors] = useState([])
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const isLocating = location != null && location.address === undefined
 
   // TODO: 로그인 기능 완성 후, 로그인하지 않았으면 안내문을 띄우고 로그인 페이지로 이동
 
@@ -65,30 +63,49 @@ function NoteComposePage() {
     setForm({ ...form, [name]: type === 'checkbox' ? checked : value })
   }
 
-  const pickCandidate = (position) => {
-    setCandidate({ ...position, address: undefined })
-    getAddress(position).then((address) =>
-      setCandidate((current) =>
-        current?.lat === position.lat && current?.lng === position.lng
-          ? { ...current, address }
-          : current,
-      ),
-    )
+  // fallbackAddress: 주소 조회가 실패하면 대신 쓸 주소 (검색 결과의 주소)
+  const pickLocation = ({ lat, lng }, fallbackAddress = null) => {
+    const requestId = ++addressRequestRef.current
+    const normalizedFallback = fallbackAddress?.trim() || undefined
+    setLocation({ lat, lng, address: normalizedFallback })
+    setLocationQuery(normalizedFallback ?? '주소 확인 중…')
+    getAddress({ lat, lng }).then((found) => {
+      if (requestId !== addressRequestRef.current) return
+      const address = found?.trim() || normalizedFallback || UNKNOWN_ADDRESS
+      setLocation({ lat, lng, address })
+      setLocationQuery(address)
+    })
   }
 
-  const handleSearchSelect = ({ lat, lng }) => {
+  const handleMapPick = (position) => {
+    searchRef.current?.cancelSearch()
+    pickLocation(position)
+  }
+
+  const handleSearchSelect = ({ lat, lng, address }) => {
     setSearched({ lat, lng })
-    pickCandidate({ lat, lng })
+    pickLocation({ lat, lng }, address)
+  }
+
+  // 위치 칸을 고쳐 쓰면 이전에 고른 위치는 무효 (다시 고르거나 지도를 눌러야 함)
+  const handleLocationQueryChange = (next) => {
+    addressRequestRef.current += 1
+    setLocationQuery(next)
+    setLocation(null)
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (submitting) return
+    if (isLocating) {
+      setErrors(['위치 주소를 확인하고 있어요. 잠시 후 다시 등록해주세요.'])
+      return
+    }
     const input = {
       ...form,
-      latitude: confirmed?.lat,
-      longitude: confirmed?.lng,
-      locationName: confirmed?.address ?? '',
+      latitude: location?.lat,
+      longitude: location?.lng,
+      locationName: location?.address ?? '',
     }
     const validationErrors = validateNote(input)
     setErrors(validationErrors)
@@ -160,27 +177,30 @@ function NoteComposePage() {
             />
           </label>
 
-          <div className={styles.fieldRow}>
-            <label className={styles.field}>
-              <span className={styles.fieldLabel}>관찰 날짜 *</span>
-              <input
-                className={styles.input}
-                type="date"
-                name="observedDate"
-                value={form.observedDate}
-                onChange={handleChange}
-                max={getLocalToday()}
-              />
-            </label>
-            <label className={styles.field}>
-              <span className={styles.fieldLabel}>위치 *</span>
-              <input
-                className={styles.input}
-                readOnly
-                value={confirmed ? describeLocation(confirmed) : ''}
-                placeholder="지도에서 선택한 위치"
-              />
-            </label>
+          <label className={styles.field}>
+            <span className={styles.fieldLabel}>관찰 날짜 *</span>
+            <input
+              className={styles.input}
+              type="date"
+              name="observedDate"
+              value={form.observedDate}
+              onChange={handleChange}
+              max={getLocalToday()}
+            />
+          </label>
+
+          <div className={styles.field}>
+            <span className={styles.fieldLabel}>위치 *</span>
+            <PlaceSearchBox
+              ref={searchRef}
+              value={locationQuery}
+              onValueChange={handleLocationQueryChange}
+              onSelect={handleSearchSelect}
+              selectFirst
+            />
+            <span className={styles.hint}>
+              지도를 눌러도 위치를 정할 수 있어요.
+            </span>
           </div>
 
           <label className={styles.field}>
@@ -236,7 +256,7 @@ function NoteComposePage() {
             <button
               type="submit"
               className={styles.primaryButton}
-              disabled={submitting}
+              disabled={submitting || isLocating}
             >
               {submitting ? '등록 중…' : '공개 안심노트 등록'}
             </button>
@@ -244,7 +264,7 @@ function NoteComposePage() {
         </form>
 
         <div className={styles.side}>
-          <MapView className={styles.map} onClick={pickCandidate}>
+          <MapView className={styles.map} onClick={handleMapPick}>
             {approvedNotes.map((note) => (
               <MapMarker
                 key={note.id}
@@ -252,33 +272,9 @@ function NoteComposePage() {
                 position={{ lat: note.latitude, lng: note.longitude }}
               />
             ))}
-            <MapMarker type="new" position={candidate} />
+            <MapMarker type="new" position={location} />
             <CenterOn position={searched} />
           </MapView>
-
-          <div className={styles.locationCard}>
-            <h2 className={styles.cardTitle}>
-              지도를 누르거나 검색해서 관찰 위치를 정해주세요
-            </h2>
-            <PlaceSearchBox onSelect={handleSearchSelect} />
-            <p className={styles.description}>
-              선택한 위치:{' '}
-              {candidate ? describeLocation(candidate) : '아직 선택하지 않음'}
-            </p>
-            <button
-              type="button"
-              className={styles.primaryButton}
-              onClick={() => setConfirmed(candidate)}
-              disabled={!candidate || candidate.address === undefined}
-            >
-              이 위치로 지정
-            </button>
-            {confirmed && (
-              <p className={styles.confirmed}>
-                지정됨: {describeLocation(confirmed)}
-              </p>
-            )}
-          </div>
         </div>
       </div>
     </section>
