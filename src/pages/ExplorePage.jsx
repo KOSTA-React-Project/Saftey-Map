@@ -46,17 +46,13 @@ function ExplorePage() {
           <h3 className={styles.sectionTitle}>범죄 유형</h3>
           <span className={styles.sectionNote}>공공데이터</span>
         </div>
-        <div
-          className={styles.typeGrid}
-          role="radiogroup"
-          aria-label="범죄 유형"
-        >
+        {/* 버튼 기본 동작(Tab 이동, Enter·Space 선택)에 맞춰 토글 버튼으로 표시 */}
+        <div className={styles.typeGrid} role="group" aria-label="범죄 유형">
           {CRIME_TYPES.map(({ id, label }) => (
             <button
               key={id}
               type="button"
-              role="radio"
-              aria-checked={crimeType === id}
+              aria-pressed={crimeType === id}
               className={`${styles.typeButton} ${crimeType === id ? styles.typeSelected : ''}`}
               onClick={() => setCrimeType(id)}
             >
