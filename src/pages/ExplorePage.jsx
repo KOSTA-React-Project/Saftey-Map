@@ -3,19 +3,39 @@ import { useNavigate } from 'react-router'
 import { ROUTES } from '../constants/routes.js'
 import Sidebar from '../components/layout/Sidebar.jsx'
 import MapMarker from '../components/map/MapMarker.jsx'
+import MapRadius from '../components/map/MapRadius.jsx'
 import PlaceSearchBox from '../components/search/PlaceSearchBox.jsx'
-import { useMapCenter } from '../hooks/useMap.js'
+import { useMapCenter, useMapClick } from '../hooks/useMap.js'
 import { useCrimeType } from '../hooks/useCrimeType.js'
 import { CRIME_TYPES, DEFAULT_CRIME_TYPE } from '../constants/crimeTypes.js'
 import { getApprovedNotes } from '../api/notesApi.js'
 import styles from './ExplorePage.module.css'
 
-// 01 지도 탐색 — 주소·장소 검색, 범죄 유형 필터, 승인된 안심노트 표시
+const RADIUS_OPTIONS = [
+  { value: 500, label: '500m' },
+  { value: 1000, label: '1km' },
+]
+
+// 01 지도 탐색 — 주소·장소 검색, 범죄 유형 필터, 승인된 안심노트, 중심·반경 표시
 function ExplorePage() {
   const navigate = useNavigate()
   const [notes, setNotes] = useState([])
   const [place, setPlace] = useState(null)
   const { crimeType, setCrimeType } = useCrimeType()
+  const [pointA, setPointA] = useState({ lat: 37.5665, lng: 126.978 })
+  const [radius, setRadius] = useState(500)
+
+  // 지도를 누르면 그 지점이 중심(A). 검색으로 고른 장소 표시는 해제
+  useMapClick((point) => {
+    setPlace(null)
+    setPointA(point)
+  })
+
+  // 검색한 곳으로 지도를 옮기고 중심도 그곳으로
+  const selectPlace = (result) => {
+    setPlace(result)
+    setPointA({ lat: result.lat, lng: result.lng })
+  }
 
   // 검색한 위치로 지도 이동
   useMapCenter(place)
@@ -34,7 +54,7 @@ function ExplorePage() {
       <Sidebar>
         <h2 className={styles.title}>이사할 동네, 같은 기준으로 살펴봐요</h2>
         <p className={styles.label}>주소·장소 검색</p>
-        <PlaceSearchBox onSelect={setPlace} />
+        <PlaceSearchBox onSelect={selectPlace} />
         {place && (
           <p className={styles.selected}>
             <strong>{place.label}</strong>
@@ -60,6 +80,32 @@ function ExplorePage() {
             </button>
           ))}
         </div>
+
+        <fieldset className={styles.radius}>
+          <legend className={styles.sectionTitle}>반지름 선택</legend>
+          {RADIUS_OPTIONS.map((option) => (
+            <label
+              key={option.value}
+              className={
+                radius === option.value
+                  ? styles.radiusSelected
+                  : styles.radiusOption
+              }
+            >
+              <input
+                type="radio"
+                name="radius"
+                value={option.value}
+                checked={radius === option.value}
+                onChange={() => setRadius(option.value)}
+              />
+              {option.label}
+            </label>
+          ))}
+        </fieldset>
+        <p className={styles.description}>
+          지도를 누르면 그 지점을 중심으로 반경을 보여줘요.
+        </p>
       </Sidebar>
       {notes.map((note) => (
         <MapMarker
@@ -69,6 +115,8 @@ function ExplorePage() {
           onClick={() => navigate(`${ROUTES.NOTES}/${note.id}`)}
         />
       ))}
+      <MapMarker type="A" position={pointA} />
+      <MapRadius center={pointA} radius={radius} />
     </>
   )
 }

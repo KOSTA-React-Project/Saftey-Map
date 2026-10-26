@@ -41,7 +41,7 @@ export function compareReducer(state, action) {
       }
     }
     case 'radius':
-      if (![500, 1000, 2000].includes(action.radius)) return state
+      if (![500, 1000].includes(action.radius)) return state
       return {
         ...state,
         radius: action.radius,

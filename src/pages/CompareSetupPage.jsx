@@ -125,7 +125,7 @@ function CompareSetupPage() {
           <fieldset className={styles.section}>
             <legend>2 두 지점에 적용할 반경</legend>
             <div className={styles.radiusOptions}>
-              {[500, 1000, 2000].map((radius) => (
+              {[500, 1000].map((radius) => (
                 <button
                   type="button"
                   key={radius}
