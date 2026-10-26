@@ -163,6 +163,49 @@ test('IME 확정 Enter(keyCode 229)는 검색하지 않고 다음 일반 Enter�
     assert.equal(await searchButton(page).isDisabled(), true)
   }))
 
+test('검색 결과 주소가 공백이면 역지오코딩 완료 전 제출을 막는다', () =>
+  withPage(async (page) => {
+    await fillForm(page)
+    await search(page, '주소 없는 장소')
+    await page.evaluate(() => {
+      const pending = window.locationTest.pending
+      pending.addresses['주소 없는 장소']([], 'OK')
+      pending.places['주소 없는 장소'](
+        [
+          {
+            place_name: '주소 없는 장소',
+            road_address_name: '   ',
+            address_name: '',
+            y: '37.5',
+            x: '127',
+          },
+        ],
+        'OK',
+      )
+    })
+    await page.waitForFunction(
+      () => window.locationTest.pending.reverse.length === 1,
+    )
+    assert.equal(await submitButton(page).isDisabled(), true)
+    await page.locator('form').evaluate((form) => form.requestSubmit())
+    assert.equal(
+      await page.evaluate(() => localStorage.getItem('safety-map:notes')),
+      null,
+    )
+    await page.evaluate(() => window.locationTest.addressResult(0, '   '))
+    await page.waitForFunction(
+      () => !document.querySelector('button[type="submit"]').disabled,
+    )
+    await submitButton(page).click()
+    await page
+      .getByRole('heading', { name: '안심노트가 제출되었어요' })
+      .waitFor()
+    const notes = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem('safety-map:notes')),
+    )
+    assert.equal(notes[0].locationName, '주소를 확인할 수 없는 위치')
+  }))
+
 async function search(page, query) {
   await queryInput(page).fill(query)
   await queryInput(page).press('Enter')

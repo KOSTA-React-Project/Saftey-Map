@@ -66,11 +66,12 @@ function NoteComposePage() {
   // fallbackAddress: 주소 조회가 실패하면 대신 쓸 주소 (검색 결과의 주소)
   const pickLocation = ({ lat, lng }, fallbackAddress = null) => {
     const requestId = ++addressRequestRef.current
-    setLocation({ lat, lng, address: fallbackAddress ?? undefined })
-    setLocationQuery(fallbackAddress ?? '주소 확인 중…')
+    const normalizedFallback = fallbackAddress?.trim() || undefined
+    setLocation({ lat, lng, address: normalizedFallback })
+    setLocationQuery(normalizedFallback ?? '주소 확인 중…')
     getAddress({ lat, lng }).then((found) => {
       if (requestId !== addressRequestRef.current) return
-      const address = found ?? fallbackAddress ?? UNKNOWN_ADDRESS
+      const address = found?.trim() || normalizedFallback || UNKNOWN_ADDRESS
       setLocation({ lat, lng, address })
       setLocationQuery(address)
     })
