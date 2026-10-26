@@ -3,32 +3,51 @@ import { searchPlaces } from '../../utils/placeSearch.js'
 import styles from './PlaceSearchBox.module.css'
 
 // 주소·장소명 검색. 결과를 고르면 onSelect({ lat, lng, label }) 호출
+// value·onValueChange를 주면 입력값을 바깥에서 관리 (예: 고른 위치의 주소 표시)
+// selectFirst면 검색하자마자 첫 결과를 고르고, 나머지 후보는 목록으로 남김
 function PlaceSearchBox({
   onSelect,
+  value,
+  onValueChange,
+  selectFirst = false,
   placeholder = '주소나 장소명을 입력하세요',
 }) {
   const inputId = useId()
-  const [query, setQuery] = useState('')
+  const [innerQuery, setInnerQuery] = useState('')
   const [results, setResults] = useState([])
   const [status, setStatus] = useState('idle')
   const [message, setMessage] = useState('')
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const query = value ?? innerQuery
+  const setQuery = onValueChange ?? setInnerQuery
+
+  const search = async () => {
     const keyword = query.trim()
-    if (!keyword) return
+    if (!keyword || status === 'loading') return
 
     setStatus('loading')
     setResults([])
     try {
       const found = await searchPlaces(keyword)
-      setResults(found)
       setStatus('done')
       setMessage(found.length === 0 ? '검색 결과가 없어요.' : '')
+      if (selectFirst && found.length > 0) {
+        onSelect(found[0])
+        setResults(found.length > 1 ? found : [])
+      } else {
+        setResults(found)
+      }
     } catch (err) {
       setStatus('done')
       setMessage(err.message)
     }
+  }
+
+  const handleKeyDown = (e) => {
+    // 바깥 폼 안에 있어도 Enter가 폼 제출 대신 검색이 되게 함
+    if (e.key !== 'Enter' || e.nativeEvent.isComposing) return
+    e.preventDefault()
+    search()
   }
 
   const handleSelect = ({ lat, lng, label }) => {
@@ -39,7 +58,7 @@ function PlaceSearchBox({
 
   return (
     <div className={styles.searchBox}>
-      <form className={styles.form} onSubmit={handleSubmit} role="search">
+      <div className={styles.form} role="search">
         <label htmlFor={inputId} className={styles.hidden}>
           주소 또는 장소 검색
         </label>
@@ -48,16 +67,18 @@ function PlaceSearchBox({
           className={styles.input}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={handleKeyDown}
           placeholder={placeholder}
         />
         <button
-          type="submit"
+          type="button"
           className={styles.button}
+          onClick={search}
           disabled={status === 'loading'}
         >
           검색
         </button>
-      </form>
+      </div>
 
       <div role="status">
         {status === 'loading' && <p className={styles.message}>검색 중…</p>}
