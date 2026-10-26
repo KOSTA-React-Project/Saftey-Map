@@ -72,7 +72,13 @@ function PlaceSearchBox({
 
   const handleKeyDown = (e) => {
     // 바깥 폼 안에 있어도 Enter가 폼 제출 대신 검색이 되게 함
-    if (e.key !== 'Enter' || e.nativeEvent.isComposing) return
+    // 일부 IME는 조합 확정 시 isComposing=false, keyCode=229로 전달된다.
+    if (
+      e.key !== 'Enter' ||
+      e.nativeEvent.isComposing ||
+      e.nativeEvent.keyCode === 229
+    )
+      return
     e.preventDefault()
     search()
   }

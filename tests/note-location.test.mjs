@@ -140,6 +140,29 @@ const searchButton = (page) =>
 const submitButton = (page) =>
   page.getByRole('button', { name: '공개 안심노트 등록' })
 
+test('IME 확정 Enter(keyCode 229)는 검색하지 않고 다음 일반 Enter만 검색한다', () =>
+  withPage(async (page) => {
+    await queryInput(page).fill('강남역')
+    await queryInput(page).dispatchEvent('keydown', {
+      key: 'Enter',
+      code: 'Enter',
+      keyCode: 229,
+      isComposing: false,
+    })
+    assert.equal(
+      await page.evaluate(() =>
+        Boolean(window.locationTest.pending.places['강남역']),
+      ),
+      false,
+    )
+    assert.equal(await queryInput(page).inputValue(), '강남역')
+    await queryInput(page).press('Enter')
+    await page.waitForFunction(() =>
+      Boolean(window.locationTest.pending.places['강남역']),
+    )
+    assert.equal(await searchButton(page).isDisabled(), true)
+  }))
+
 async function search(page, query) {
   await queryInput(page).fill(query)
   await queryInput(page).press('Enter')
