@@ -29,10 +29,28 @@ const SECTIONS = [
   },
 ]
 
+const SAFEMAP_URL =
+  'https://www.safemap.go.kr/opna/data/dataViewRenew.do?objtId=205'
+const OFFENDER_URL = 'https://www.data.go.kr/data/15131846/openapi.do'
+
 const FOOTER_ITEMS = [
   {
     label: '데이터 출처',
-    text: '생활안전지도 등 실제 연동·이용 조건이 검증된 공공자료의 출처를 표시합니다.',
+    text: (
+      <>
+        <a href={SAFEMAP_URL} target="_blank" rel="noopener noreferrer">
+          생활안전지도 범죄주의구간(전체)
+        </a>
+        <br />
+        <a href={OFFENDER_URL} target="_blank" rel="noopener noreferrer">
+          성평등가족부 성범죄자 공개 및 고지 도로명 주소 정보 (공공데이터포털)
+        </a>
+        <br />
+        성범죄자 정보는 지역별 집계 참고용이며, 위험도 점수와 합산하지 않습니다.
+        <br />
+        주민 안심노트는 서비스 이용자가 직접 작성한 자료입니다.
+      </>
+    ),
   },
   {
     label: '기준 기간·갱신 정보',
@@ -40,7 +58,17 @@ const FOOTER_ITEMS = [
   },
   {
     label: '공식 안내',
-    text: '확인된 제공기관의 공식 안내 페이지로 연결합니다.',
+    text: (
+      <>
+        <a href={SAFEMAP_URL} target="_blank" rel="noopener noreferrer">
+          생활안전지도 공식 안내 바로가기
+        </a>
+        <br />
+        <a href={OFFENDER_URL} target="_blank" rel="noopener noreferrer">
+          공공데이터포털 공식 안내 바로가기
+        </a>
+      </>
+    ),
   },
 ]
 
