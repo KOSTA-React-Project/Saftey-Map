@@ -186,6 +186,8 @@ test('검색 결과 주소가 공백이면 역지오코딩 완료 전 제출을 
     await page.waitForFunction(
       () => window.locationTest.pending.reverse.length === 1,
     )
+    // SDK 콜백 실행과 React의 화면 반영은 별도 단계다.
+    await page.locator('button[type="submit"]:disabled').waitFor()
     assert.equal(await submitButton(page).isDisabled(), true)
     await page.locator('form').evaluate((form) => form.requestSubmit())
     assert.equal(
@@ -264,7 +266,7 @@ test('지도 클릭 뒤 도착한 검색 응답은 지도 선택을 덮어쓰지
       () =>
         document.querySelector(
           'input[placeholder="주소나 장소명을 입력하세요"]',
-        ).value !== '주소 확인 중…',
+        ).value === '지도 선택 주소',
     )
     assert.equal(await queryInput(page).inputValue(), '지도 선택 주소')
     assert.equal(await searchButton(page).isEnabled(), true)
@@ -274,6 +276,7 @@ test('주소 확인 중에는 버튼과 폼 제출 모두 저장을 막고 완�
   withPage(async (page) => {
     await fillForm(page)
     await page.evaluate(() => window.locationTest.clickMap(37.6, 127.1))
+    await page.locator('button[type="submit"]:disabled').waitFor()
     assert.equal(await submitButton(page).isDisabled(), true)
     await page.locator('form').evaluate((form) => form.requestSubmit())
     assert.equal(
@@ -331,6 +334,7 @@ test('이전 검색의 실패도 새 검색의 로딩 상태와 입력을 바꾸
     await page.waitForFunction(
       () => window.locationTest.pending.reverse.length === 1,
     )
+    await searchButton(page).and(page.locator(':enabled')).waitFor()
     assert.equal(await searchButton(page).isEnabled(), true)
   }))
 
