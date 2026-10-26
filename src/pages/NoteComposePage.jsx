@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router'
 import { ROUTES } from '../constants/routes.js'
 import MapView from '../components/map/MapView.jsx'
 import MapMarker from '../components/map/MapMarker.jsx'
+import PlaceSearchBox from '../components/search/PlaceSearchBox.jsx'
+import { useMapCenter } from '../hooks/useMap.js'
 import {
   CONTENT_MAX,
   TAG_MAX,
@@ -31,6 +33,12 @@ function describeLocation({ address }) {
   return address ?? UNKNOWN_ADDRESS
 }
 
+// MapView 안에서 검색한 위치로 지도 중심을 옮김
+function CenterOn({ position }) {
+  useMapCenter(position)
+  return null
+}
+
 // 안심노트 작성 — 왼쪽 폼, 오른쪽 지도 + 위치 지정 카드
 // 지도에서 누른 지점은 후보이고, [이 위치로 지정]을 눌러야 폼에 들어감
 function NoteComposePage() {
@@ -38,6 +46,7 @@ function NoteComposePage() {
   const [form, setForm] = useState(EMPTY_FORM)
   const [approvedNotes, setApprovedNotes] = useState([])
   const [candidate, setCandidate] = useState(null)
+  const [searched, setSearched] = useState(null)
   const [confirmed, setConfirmed] = useState(null)
   const [errors, setErrors] = useState([])
   const [submitting, setSubmitting] = useState(false)
@@ -65,6 +74,11 @@ function NoteComposePage() {
           : current,
       ),
     )
+  }
+
+  const handleSearchSelect = ({ lat, lng }) => {
+    setSearched({ lat, lng })
+    pickCandidate({ lat, lng })
   }
 
   const handleSubmit = async (e) => {
@@ -239,12 +253,14 @@ function NoteComposePage() {
               />
             ))}
             <MapMarker type="new" position={candidate} />
+            <CenterOn position={searched} />
           </MapView>
 
           <div className={styles.locationCard}>
             <h2 className={styles.cardTitle}>
-              지도를 눌러 관찰 위치를 정해주세요
+              지도를 누르거나 검색해서 관찰 위치를 정해주세요
             </h2>
+            <PlaceSearchBox onSelect={handleSearchSelect} />
             <p className={styles.description}>
               선택한 위치:{' '}
               {candidate ? describeLocation(candidate) : '아직 선택하지 않음'}

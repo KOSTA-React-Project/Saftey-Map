@@ -90,6 +90,9 @@ npm run build   # 프로덕션 빌드
 | `MapRadius` | 반경 점선 원 | `center`, `radius`(m) |
 | `useMapClick(fn)` | 지도를 누르면 `fn({ lat, lng })` 호출 (MapLayout 화면용) | |
 | `useMapCenter(position)` | `position`이 바뀌면 지도 중심 이동 (MapLayout 화면용) | |
+| `PlaceSearchBox` (`components/search/`) | 주소·장소명 검색. 결과를 고르면 `onSelect({ lat, lng, label })` | `onSelect`, `placeholder` |
+| `searchPlaces(query)` (`utils/placeSearch.js`) | 주소·장소명 검색 결과 `[{ label, address, lat, lng }]` | |
+| `getAddress({ lat, lng })` (`utils/geocoder.js`) | 좌표 → 주소 문자열 (없으면 `null`) | |
 
 - 좌표는 항상 `{ lat, lng }` 형태로 쓴다.
 - **지도 화면(MapLayout) 페이지**는 지도를 직접 만들지 않는다. 페이지에 `MapMarker` 등을 쓰면 레이아웃 지도에 붙고, 페이지를 이동해도 지도는 유지된다.

@@ -1,5 +1,5 @@
 // 좌표 → 주소 변환. 카카오 SDK에 libraries=services가 있어야 동작하고,
-// 없거나 실패하면 null을 돌려줌. 팀 공용 검색 기능이 생기면 그쪽으로 교체
+// 없거나 실패하면 null을 돌려줌. 주소·장소 검색은 placeSearch.js
 export function getAddress({ lat, lng }) {
   const services = window.kakao?.maps?.services
   if (!services) return Promise.resolve(null)
