@@ -1,0 +1,288 @@
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router'
+import { ROUTES } from '../constants/routes.js'
+import MapView from '../components/map/MapView.jsx'
+import MapMarker from '../components/map/MapMarker.jsx'
+import PlaceSearchBox from '../components/search/PlaceSearchBox.jsx'
+import { useMapCenter } from '../hooks/useMap.js'
+import {
+  CONTENT_MAX,
+  TAG_MAX,
+  TITLE_MAX,
+  createNote,
+  getApprovedNotes,
+  getLocalToday,
+  validateNote,
+} from '../api/notesApi.js'
+import { getAddress } from '../utils/geocoder.js'
+import styles from './NoteComposePage.module.css'
+
+const EMPTY_FORM = {
+  title: '',
+  tag: '',
+  observedDate: '',
+  content: '',
+  agreed: false,
+}
+
+const UNKNOWN_ADDRESS = '주소를 확인할 수 없는 위치'
+
+// 좌표는 화면에 보여주지 않고 주소로만 표시. address가 undefined면 확인 중
+function describeLocation({ address }) {
+  if (address === undefined) return '주소 확인 중…'
+  return address ?? UNKNOWN_ADDRESS
+}
+
+// MapView 안에서 검색한 위치로 지도 중심을 옮김
+function CenterOn({ position }) {
+  useMapCenter(position)
+  return null
+}
+
+// 안심노트 작성 — 왼쪽 폼, 오른쪽 지도 + 위치 지정 카드
+// 지도에서 누른 지점은 후보이고, [이 위치로 지정]을 눌러야 폼에 들어감
+function NoteComposePage() {
+  const navigate = useNavigate()
+  const [form, setForm] = useState(EMPTY_FORM)
+  const [approvedNotes, setApprovedNotes] = useState([])
+  const [candidate, setCandidate] = useState(null)
+  const [searched, setSearched] = useState(null)
+  const [confirmed, setConfirmed] = useState(null)
+  const [errors, setErrors] = useState([])
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+
+  // TODO: 로그인 기능 완성 후, 로그인하지 않았으면 안내문을 띄우고 로그인 페이지로 이동
+
+  useEffect(() => {
+    getApprovedNotes()
+      .then(setApprovedNotes)
+      .catch(() => setApprovedNotes([]))
+  }, [])
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target
+    setForm({ ...form, [name]: type === 'checkbox' ? checked : value })
+  }
+
+  const pickCandidate = (position) => {
+    setCandidate({ ...position, address: undefined })
+    getAddress(position).then((address) =>
+      setCandidate((current) =>
+        current?.lat === position.lat && current?.lng === position.lng
+          ? { ...current, address }
+          : current,
+      ),
+    )
+  }
+
+  const handleSearchSelect = ({ lat, lng }) => {
+    setSearched({ lat, lng })
+    pickCandidate({ lat, lng })
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (submitting) return
+    const input = {
+      ...form,
+      latitude: confirmed?.lat,
+      longitude: confirmed?.lng,
+      locationName: confirmed?.address ?? '',
+    }
+    const validationErrors = validateNote(input)
+    setErrors(validationErrors)
+    if (validationErrors.length > 0) return
+
+    setSubmitting(true)
+    try {
+      await createNote(input)
+      setSubmitted(true)
+    } catch (err) {
+      setErrors([err.message])
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  if (submitted) {
+    return (
+      <section className={styles.done}>
+        <h1 className={styles.title}>안심노트가 제출되었어요</h1>
+        <p className={styles.description}>
+          관리자 검토 후 승인되면 지도에 공개돼요.
+        </p>
+        <button
+          type="button"
+          className={styles.primaryButton}
+          onClick={() => navigate(ROUTES.NOTES)}
+        >
+          안심노트로 돌아가기
+        </button>
+      </section>
+    )
+  }
+
+  return (
+    <section className={styles.page}>
+      <header className={styles.header}>
+        <p className={styles.eyebrow}>COMMUNITY NOTE</p>
+        <h1 className={styles.title}>직접 본 동네 이야기를 남겨주세요</h1>
+        <p className={styles.description}>
+          정확한 장소와 관찰 날짜를 적으면 다른 사람에게 도움이 돼요.
+        </p>
+      </header>
+
+      <div className={styles.layout}>
+        <form className={styles.form} onSubmit={handleSubmit} noValidate>
+          <label className={styles.field}>
+            <span className={styles.fieldLabel}>
+              제목 * · 최대 {TITLE_MAX}자
+            </span>
+            <input
+              className={styles.input}
+              name="title"
+              value={form.title}
+              onChange={handleChange}
+              maxLength={TITLE_MAX}
+            />
+          </label>
+
+          <label className={styles.field}>
+            <span className={styles.fieldLabel}>태그 * · 최대 {TAG_MAX}자</span>
+            <input
+              className={styles.input}
+              name="tag"
+              value={form.tag}
+              onChange={handleChange}
+              maxLength={TAG_MAX}
+              placeholder="예: 조명 고장, 보행로 파손"
+            />
+          </label>
+
+          <div className={styles.fieldRow}>
+            <label className={styles.field}>
+              <span className={styles.fieldLabel}>관찰 날짜 *</span>
+              <input
+                className={styles.input}
+                type="date"
+                name="observedDate"
+                value={form.observedDate}
+                onChange={handleChange}
+                max={getLocalToday()}
+              />
+            </label>
+            <label className={styles.field}>
+              <span className={styles.fieldLabel}>위치 *</span>
+              <input
+                className={styles.input}
+                readOnly
+                value={confirmed ? describeLocation(confirmed) : ''}
+                placeholder="지도에서 선택한 위치"
+              />
+            </label>
+          </div>
+
+          <label className={styles.field}>
+            <span className={styles.fieldLabel}>
+              내용 * · 최대 {CONTENT_MAX.toLocaleString()}자
+            </span>
+            <textarea
+              className={styles.textarea}
+              name="content"
+              value={form.content}
+              onChange={handleChange}
+              maxLength={CONTENT_MAX}
+              placeholder="직접 관찰한 상황과 시간을 적어주세요."
+            />
+            <span className={styles.charCount}>
+              {form.content.length} / {CONTENT_MAX.toLocaleString()}
+            </span>
+          </label>
+
+          <div className={styles.notice}>
+            <p>
+              개인을 식별할 수 있는 정보나 확인하지 않은 추측은 적지 말아주세요.
+            </p>
+            <p>공개 메모는 범죄 신고 접수나 긴급 대응 기능이 아닙니다.</p>
+          </div>
+
+          <label className={styles.check}>
+            <input
+              type="checkbox"
+              name="agreed"
+              checked={form.agreed}
+              onChange={handleChange}
+            />
+            작성한 메모가 모든 이용자에게 공개됨을 확인했어요. *
+          </label>
+
+          {errors.length > 0 && (
+            <ul className={styles.errors} role="alert">
+              {errors.map((message) => (
+                <li key={message}>{message}</li>
+              ))}
+            </ul>
+          )}
+
+          <div className={styles.actions}>
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              onClick={() => navigate(ROUTES.NOTES)}
+            >
+              취소
+            </button>
+            <button
+              type="submit"
+              className={styles.primaryButton}
+              disabled={submitting}
+            >
+              {submitting ? '등록 중…' : '공개 안심노트 등록'}
+            </button>
+          </div>
+        </form>
+
+        <div className={styles.side}>
+          <MapView className={styles.map} onClick={pickCandidate}>
+            {approvedNotes.map((note) => (
+              <MapMarker
+                key={note.id}
+                type="note"
+                position={{ lat: note.latitude, lng: note.longitude }}
+              />
+            ))}
+            <MapMarker type="new" position={candidate} />
+            <CenterOn position={searched} />
+          </MapView>
+
+          <div className={styles.locationCard}>
+            <h2 className={styles.cardTitle}>
+              지도를 누르거나 검색해서 관찰 위치를 정해주세요
+            </h2>
+            <PlaceSearchBox onSelect={handleSearchSelect} />
+            <p className={styles.description}>
+              선택한 위치:{' '}
+              {candidate ? describeLocation(candidate) : '아직 선택하지 않음'}
+            </p>
+            <button
+              type="button"
+              className={styles.primaryButton}
+              onClick={() => setConfirmed(candidate)}
+              disabled={!candidate || candidate.address === undefined}
+            >
+              이 위치로 지정
+            </button>
+            {confirmed && (
+              <p className={styles.confirmed}>
+                지정됨: {describeLocation(confirmed)}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+export default NoteComposePage

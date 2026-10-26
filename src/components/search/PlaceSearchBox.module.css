@@ -1,0 +1,87 @@
+.searchBox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.form {
+  display: flex;
+  gap: var(--space-8);
+}
+
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: var(--touch-target);
+  padding: 0 var(--space-12);
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.button {
+  height: var(--touch-target);
+  padding: 0 var(--space-16);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-white);
+  background: var(--color-primary);
+  border: none;
+  border-radius: var(--radius-sm);
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.message {
+  font-size: var(--font-size-sm);
+  color: var(--color-secondary);
+}
+
+.results {
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.results li + li {
+  border-top: 1px solid var(--color-border);
+}
+
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+  padding: var(--space-12);
+  text-align: left;
+  background: none;
+  border: none;
+}
+
+.result:hover,
+.result:focus-visible {
+  background: var(--color-surface);
+}
+
+.label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.address {
+  font-size: var(--font-size-xs);
+  color: var(--color-secondary);
+}
