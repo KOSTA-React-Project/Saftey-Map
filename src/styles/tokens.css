@@ -13,18 +13,6 @@
   --color-border: #e3e8e3;
   --color-map-placeholder: #e4eae2;
 
-  /* 범죄주의구간 등급 (임시값 · 공식 범례 확인 후 교체) */
-  --color-grade-1: #f3e6b5;
-  --color-grade-2: #ebd58e;
-  --color-grade-3: #e5c46f;
-  --color-grade-4: #e2b25e;
-  --color-grade-5: #dc9d4e;
-  --color-grade-6: #d4864a;
-  --color-grade-7: #c77245;
-  --color-grade-8: #b65e3e;
-  --color-grade-9: #a04a38;
-  --color-grade-10: #883a33;
-
   /* 타이포그래피 */
   --font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
   --font-size-xs: 12px;
