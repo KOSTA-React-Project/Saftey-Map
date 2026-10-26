@@ -17,6 +17,7 @@ export const NOTE_STATUS = {
   PENDING: 'PENDING',
   APPROVED: 'APPROVED',
   REJECTED: 'REJECTED',
+  HIDDEN: 'HIDDEN',
 }
 
 export const TITLE_MAX = 60
@@ -180,32 +181,88 @@ export async function getApprovedNote(id) {
     (n) => n.id === Number(id) && n.status === NOTE_STATUS.APPROVED,
   )
   if (!note) return fail(404, '안심노트를 찾을 수 없습니다.')
-  const publicNote = { ...note }
-  delete publicNote.authorId
-  return respond(publicNote)
+  // 관리자 사유·처리 이력·작성자 정보는 공개 응답에 포함하지 않는다.
+  const {
+    id: noteId,
+    title,
+    tag,
+    content,
+    observedDate,
+    locationName,
+    latitude,
+    longitude,
+    createdAt,
+    status,
+  } = note
+  return respond({
+    id: noteId,
+    title,
+    tag,
+    content,
+    observedDate,
+    locationName,
+    latitude,
+    longitude,
+    createdAt,
+    status,
+  })
 }
 
+// null은 관리자 전체 목록. 현재는 localStorage 데모이며 서버 권한 검증이 아니다.
 export async function getNotesForAdmin(status = NOTE_STATUS.PENDING) {
-  return respond(readAll().filter((n) => n.status === status))
+  return respond(
+    readAll().filter((note) => status == null || note.status === status),
+  )
 }
 
-export async function updateNoteStatus(id, nextStatus) {
-  if (
-    nextStatus !== NOTE_STATUS.APPROVED &&
-    nextStatus !== NOTE_STATUS.REJECTED
-  ) {
-    return fail(400, '승인 또는 반려만 선택할 수 있습니다.')
-  }
-
+export async function updateNoteStatus(
+  id,
+  nextStatus,
+  { reason = '', expectedStatus } = {},
+) {
   const notes = readAll()
-  const note = notes.find((n) => n.id === Number(id))
+  const note = notes.find((item) => item.id === Number(id))
   if (!note) return fail(404, '안심노트를 찾을 수 없습니다.')
-  // 이미 처리된 글은 다시 처리하지 않는다 (중복 클릭 방지)
-  if (note.status !== NOTE_STATUS.PENDING) {
-    return fail(409, '이미 처리된 안심노트입니다.')
+  if (expectedStatus != null && note.status !== expectedStatus) {
+    return fail(
+      409,
+      '다른 화면에서 이미 처리되었습니다. 목록을 새로고침해 주세요.',
+    )
   }
-
+  const transitions = {
+    [NOTE_STATUS.PENDING]: [NOTE_STATUS.APPROVED, NOTE_STATUS.REJECTED],
+    [NOTE_STATUS.APPROVED]: [NOTE_STATUS.HIDDEN],
+    [NOTE_STATUS.HIDDEN]: [NOTE_STATUS.APPROVED],
+    [NOTE_STATUS.REJECTED]: [],
+  }
+  if (!transitions[note.status]?.includes(nextStatus)) {
+    return fail(
+      409,
+      '현재 상태에서는 선택한 처리를 할 수 없습니다. 목록을 새로고침해 주세요.',
+    )
+  }
+  if (typeof reason !== 'string' || reason.trim().length > 500) {
+    return fail(400, '처리 사유는 500자 이하로 입력해 주세요.')
+  }
+  if (
+    [NOTE_STATUS.REJECTED, NOTE_STATUS.HIDDEN].includes(nextStatus) &&
+    !reason.trim()
+  ) {
+    return fail(400, '반려·숨김 사유를 입력해 주세요.')
+  }
+  const now = new Date().toISOString()
+  const entry = {
+    id: crypto.randomUUID(),
+    from: note.status,
+    to: nextStatus,
+    reason: reason.trim(),
+    actor: '개발용 데모 관리자',
+    processedAt: now,
+  }
   note.status = nextStatus
+  note.updatedAt = now
+  note.moderationHistory = [...(note.moderationHistory ?? []), entry]
+  // 상태와 이력을 하나의 저장 값으로 기록한다. 실패하면 성공 응답을 보내지 않는다.
   writeAll(notes)
   return respond({ id: note.id, status: note.status })
 }
