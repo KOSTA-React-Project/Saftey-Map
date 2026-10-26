@@ -46,30 +46,12 @@ const FOOTER_ITEMS = [
           성평등가족부 성범죄자 알림e
         </a>{' '}
         — 성범죄자 공개 및 고지 정보
-        <br />
-        성범죄자 정보는 지역별 집계 참고용이며, 위험도 점수와 합산하지 않습니다.
-        <br />
-        주민 안심노트는 서비스 이용자가 직접 작성한 자료입니다.
       </>
     ),
   },
   {
     label: '기준 기간·갱신 정보',
     text: '원천자료에서 확인되는 경우에만 실제 기준 시점을 표시하고, 서비스 조회 시각과 구분합니다.',
-  },
-  {
-    label: '공식 안내',
-    text: (
-      <>
-        <a href={SAFEMAP_URL} target="_blank" rel="noopener noreferrer">
-          생활안전지도 바로가기
-        </a>
-        <br />
-        <a href={OFFENDER_URL} target="_blank" rel="noopener noreferrer">
-          성범죄자 알림e 바로가기
-        </a>
-      </>
-    ),
   },
 ]
 
