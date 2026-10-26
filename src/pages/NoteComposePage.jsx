@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { ROUTES } from '../constants/routes.js'
 import MapView from '../components/map/MapView.jsx'
@@ -42,6 +42,8 @@ function NoteComposePage() {
   const [location, setLocation] = useState(null)
   const [locationQuery, setLocationQuery] = useState('')
   const [searched, setSearched] = useState(null)
+  // 위치를 연달아 고를 때 늦게 온 주소 조회 결과를 버리기 위한 요청 번호
+  const addressRequestRef = useRef(0)
   const [errors, setErrors] = useState([])
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -59,22 +61,29 @@ function NoteComposePage() {
     setForm({ ...form, [name]: type === 'checkbox' ? checked : value })
   }
 
-  const pickLocation = (position) => {
-    setLocation({ ...position, address: undefined })
+  // fallbackAddress: 주소 조회가 실패하면 대신 쓸 주소 (검색 결과의 주소)
+  const pickLocation = ({ lat, lng }, fallbackAddress = null) => {
+    const requestId = ++addressRequestRef.current
+    setLocation({ lat, lng, address: undefined })
     setLocationQuery('주소 확인 중…')
-    getAddress(position).then((address) => {
-      const isCurrent = (current) =>
-        current?.lat === position.lat && current?.lng === position.lng
-      setLocation((current) =>
-        isCurrent(current) ? { ...current, address } : current,
-      )
+    getAddress({ lat, lng }).then((found) => {
+      if (requestId !== addressRequestRef.current) return
+      const address = found ?? fallbackAddress
+      setLocation({ lat, lng, address })
       setLocationQuery(address ?? UNKNOWN_ADDRESS)
     })
   }
 
-  const handleSearchSelect = ({ lat, lng }) => {
+  const handleSearchSelect = ({ lat, lng, address }) => {
     setSearched({ lat, lng })
-    pickLocation({ lat, lng })
+    pickLocation({ lat, lng }, address)
+  }
+
+  // 위치 칸을 고쳐 쓰면 이전에 고른 위치는 무효 (다시 고르거나 지도를 눌러야 함)
+  const handleLocationQueryChange = (next) => {
+    addressRequestRef.current += 1
+    setLocationQuery(next)
+    setLocation(null)
   }
 
   const handleSubmit = async (e) => {
@@ -172,7 +181,7 @@ function NoteComposePage() {
             <span className={styles.fieldLabel}>위치 *</span>
             <PlaceSearchBox
               value={locationQuery}
-              onValueChange={setLocationQuery}
+              onValueChange={handleLocationQueryChange}
               onSelect={handleSearchSelect}
               selectFirst
             />

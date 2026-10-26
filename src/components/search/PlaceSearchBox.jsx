@@ -1,8 +1,8 @@
-import { useId, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { searchPlaces } from '../../utils/placeSearch.js'
 import styles from './PlaceSearchBox.module.css'
 
-// 주소·장소명 검색. 결과를 고르면 onSelect({ lat, lng, label }) 호출
+// 주소·장소명 검색. 결과를 고르면 onSelect({ lat, lng, label, address }) 호출
 // value·onValueChange를 주면 입력값을 바깥에서 관리 (예: 고른 위치의 주소 표시)
 // selectFirst면 검색하자마자 첫 결과를 고르고, 나머지 후보는 목록으로 남김
 function PlaceSearchBox({
@@ -17,18 +17,30 @@ function PlaceSearchBox({
   const [results, setResults] = useState([])
   const [status, setStatus] = useState('idle')
   const [message, setMessage] = useState('')
+  // 검색 중 입력이 바뀌면 늦게 온 결과를 버리기 위한 요청 번호
+  const requestRef = useRef(0)
 
   const query = value ?? innerQuery
-  const setQuery = onValueChange ?? setInnerQuery
+
+  const setQuery = (next) => {
+    requestRef.current += 1
+    if (onValueChange) onValueChange(next)
+    else setInnerQuery(next)
+  }
 
   const search = async () => {
     const keyword = query.trim()
     if (!keyword || status === 'loading') return
 
+    const requestId = ++requestRef.current
     setStatus('loading')
     setResults([])
     try {
       const found = await searchPlaces(keyword)
+      if (requestId !== requestRef.current) {
+        setStatus('idle')
+        return
+      }
       setStatus('done')
       setMessage(found.length === 0 ? '검색 결과가 없어요.' : '')
       if (selectFirst && found.length > 0) {
@@ -38,6 +50,10 @@ function PlaceSearchBox({
         setResults(found)
       }
     } catch (err) {
+      if (requestId !== requestRef.current) {
+        setStatus('idle')
+        return
+      }
       setStatus('done')
       setMessage(err.message)
     }
@@ -50,8 +66,8 @@ function PlaceSearchBox({
     search()
   }
 
-  const handleSelect = ({ lat, lng, label }) => {
-    onSelect({ lat, lng, label })
+  const handleSelect = ({ lat, lng, label, address }) => {
+    onSelect({ lat, lng, label, address })
     setResults([])
     setMessage('')
   }
