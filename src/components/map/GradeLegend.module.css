@@ -1,0 +1,50 @@
+/* 카카오 로고·축척 표시를 가리지 않도록 아래쪽을 띄움 */
+.legend {
+  position: absolute;
+  bottom: var(--space-40);
+  left: var(--space-16);
+  z-index: 1;
+  width: 256px;
+  padding: var(--space-16);
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.08);
+}
+
+.title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.bar {
+  display: flex;
+  height: 12px;
+  margin-top: var(--space-12);
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+.step {
+  flex: 1;
+}
+
+.status {
+  margin-top: var(--space-12);
+  font-size: var(--font-size-xs);
+  color: var(--color-secondary);
+}
+
+.labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--space-4);
+  font-size: var(--font-size-xs);
+  color: var(--color-secondary);
+}
+
+.source {
+  margin-top: var(--space-8);
+  font-size: var(--font-size-xs);
+  color: var(--color-secondary);
+}

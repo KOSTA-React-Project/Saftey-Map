@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Outlet } from 'react-router'
 import { MapContext } from '../hooks/useMap.js'
+import CrimeLayer from '../components/map/CrimeLayer.jsx'
+import GradeLegend from '../components/map/GradeLegend.jsx'
 import MapView from '../components/map/MapView.jsx'
 import styles from './MapLayout.module.css'
 
@@ -16,7 +18,11 @@ function MapLayout() {
           <Outlet />
         </div>
         <div className={styles.mapArea}>
-          <MapView className={styles.map} onCreate={setMap} />
+          <MapView className={styles.map} onCreate={setMap}>
+            {/* 출처는 범례 카드 안에 표시 */}
+            <CrimeLayer showAttribution={false} />
+            <GradeLegend />
+          </MapView>
         </div>
       </div>
     </MapContext.Provider>
