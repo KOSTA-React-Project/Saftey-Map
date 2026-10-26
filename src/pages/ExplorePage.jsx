@@ -25,8 +25,11 @@ function ExplorePage() {
   const [pointA, setPointA] = useState({ lat: 37.5665, lng: 126.978 })
   const [radius, setRadius] = useState(500)
 
-  // 지도를 누르면 그 지점이 중심(A)
-  useMapClick(setPointA)
+  // 지도를 누르면 그 지점이 중심(A). 검색으로 고른 장소 표시는 해제
+  useMapClick((point) => {
+    setPlace(null)
+    setPointA(point)
+  })
 
   // 검색한 곳으로 지도를 옮기고 중심도 그곳으로
   const selectPlace = (result) => {
