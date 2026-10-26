@@ -30,7 +30,6 @@ const SECTIONS = [
 ]
 
 const SAFEMAP_URL = 'https://www.safemap.go.kr'
-const OFFENDER_URL = 'https://www.sexoffender.go.kr'
 
 const FOOTER_ITEMS = [
   {
@@ -41,11 +40,6 @@ const FOOTER_ITEMS = [
           행정안전부 생활안전지도
         </a>{' '}
         — 범죄주의구간 정보
-        <br />
-        <a href={OFFENDER_URL} target="_blank" rel="noopener noreferrer">
-          성평등가족부 성범죄자 알림e
-        </a>{' '}
-        — 성범죄자 공개 및 고지 정보
       </>
     ),
   },
