@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { parseAdminQuery } from './adminQuery.js'
 import { NOTE_STATUS, validateNote } from '../shared/notes.js'
 
 export class HttpError extends Error {
@@ -9,10 +10,17 @@ export class HttpError extends Error {
 }
 
 function idOf(value) {
-  if (!/^[1-9]\d*$/.test(String(value)) || Number(value) > 4294967295) {
+  const id = String(value)
+
+  if (!/^[1-9]\d{0,19}$/.test(id)) {
     throw new HttpError(400, '노트 ID가 올바르지 않습니다.')
   }
-  return Number(value)
+
+  if (BigInt(id) > 18446744073709551615n) {
+    throw new HttpError(400, '노트 ID가 올바르지 않습니다.')
+  }
+
+  return id
 }
 
 // 회원 ID는 서버가 만드는 UUID (노션 DB ERD의 users.id CHAR(36))
@@ -27,6 +35,7 @@ function requireUser(req, res, next) {
   if (!req.user || !isUserId(req.user.id)) {
     throw new HttpError(401, '로그인이 필요합니다.')
   }
+
   next()
 }
 
@@ -89,11 +98,13 @@ export function createNotesRouter({ repository, authenticate }) {
     requireUser,
     requireAdmin,
     async (req, res) => {
-      // status를 생략하면 기존 UI 계약대로 승인 대기, 빈 문자열이면 전체 목록.
-      const status = req.query.status ?? NOTE_STATUS.PENDING
-      if (status !== '' && !Object.values(NOTE_STATUS).includes(status))
-        throw new HttpError(400, '조회 상태가 올바르지 않습니다.')
-      res.json(await repository.listForAdmin(status || null))
+      let filters
+      try {
+        filters = parseAdminQuery(req.query)
+      } catch (error) {
+        throw new HttpError(400, error.message)
+      }
+      res.json(await repository.listForAdmin(filters))
     },
   )
   router.patch(
