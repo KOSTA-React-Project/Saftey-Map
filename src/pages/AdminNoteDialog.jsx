@@ -219,27 +219,11 @@ function AdminNoteDialog({ note, onClose, onProcessed }) {
         )}
       </form>
       <details className={styles.historyDetails}>
-        <summary>
-          이 메모의 처리 이력 ({note.moderationHistory?.length ?? 0})
-        </summary>
-        {note.moderationHistory?.length ? (
-          <ul>
-            {[...note.moderationHistory].reverse().map((entry) => (
-              <li key={entry.id}>
-                <strong>
-                  {ADMIN_STATUS_LABELS[entry.from]} →{' '}
-                  {ADMIN_STATUS_LABELS[entry.to]}
-                </strong>
-                <p>{entry.reason || '승인 사유 미입력'}</p>
-                <small>
-                  {entry.actor} ·{' '}
-                  {new Date(entry.processedAt).toLocaleString('ko-KR')}
-                </small>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>아직 처리 이력이 없습니다.</p>
+        <summary>최근 처리 상태와 사유</summary>
+        <p>{ADMIN_STATUS_LABELS[note.status]}</p>
+        <p>{note.moderationReason || '등록된 처리 사유가 없습니다.'}</p>
+        {note.updatedAt && (
+          <small>{new Date(note.updatedAt).toLocaleString('ko-KR')}</small>
         )}
       </details>
     </dialog>

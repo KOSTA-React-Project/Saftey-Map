@@ -6,7 +6,7 @@ import styles from './MapMarker.module.css'
 const LABELS = { A: 'A', B: 'B', note: '+', new: 'N' }
 
 // type: 'A' | 'B' | 'note'(안심노트) | 'new'(작성 중 위치)
-function MapMarker({ type = 'note', position, onClick }) {
+function MapMarker({ type = 'note', position, onClick, label = '안심노트 보기' }) {
   const map = useMap()
   const [element] = useState(() => document.createElement('div'))
   const onClickRef = useRef(onClick)
@@ -24,7 +24,8 @@ function MapMarker({ type = 'note', position, onClick }) {
       map,
       position: new kakao.maps.LatLng(lat, lng),
       content: element,
-      zIndex: type === 'note' ? 3 : 4,
+      // 승인 노트가 중심 A/B에 가려지지 않게 하고 작성 중 위치는 가장 위에 둔다.
+      zIndex: type === 'new' ? 6 : type === 'note' ? 5 : 4,
     })
     return () => overlay.setMap(null)
   }, [map, element, lat, lng, type])
@@ -44,6 +45,15 @@ function MapMarker({ type = 'note', position, onClick }) {
     <div
       className={`${styles.marker} ${styles[type]}`}
       style={{ cursor: onClick ? 'pointer' : 'default' }}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      aria-label={onClick ? label : undefined}
+      onKeyDown={(event) => {
+        if (onClick && ['Enter', ' '].includes(event.key)) {
+          event.preventDefault()
+          onClick()
+        }
+      }}
     >
       {LABELS[type]}
     </div>,
