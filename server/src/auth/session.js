@@ -39,9 +39,20 @@ export function clearSessionCookie(res) {
   res.clearCookie(COOKIE_NAME, cookieOptions)
 }
 
+// 요청의 Cookie 헤더에서 로그인 쿠키 값을 찾는다
+function readSessionToken(req) {
+  for (const part of (req.headers.cookie ?? '').split(';')) {
+    const index = part.indexOf('=')
+    if (index > -1 && part.slice(0, index).trim() === COOKIE_NAME) {
+      return part.slice(index + 1).trim()
+    }
+  }
+  return null
+}
+
 // 쿠키가 없거나 서명·만료가 맞지 않으면 null
 export function readSessionUserId(req) {
-  const token = req.cookies?.[COOKIE_NAME]
+  const token = readSessionToken(req)
   if (!token) return null
   try {
     return jwt.verify(token, secret, { algorithms: ['HS256'] }).sub ?? null

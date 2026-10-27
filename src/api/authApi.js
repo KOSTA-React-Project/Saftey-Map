@@ -125,7 +125,8 @@ export async function login(input) {
 }
 
 export async function logout() {
-  await request('/logout', { method: 'POST' })
+  // 서버가 POST 요청은 JSON 형식만 받으므로 빈 객체를 보낸다
+  await request('/logout', { method: 'POST', body: {} })
   return null
 }
 

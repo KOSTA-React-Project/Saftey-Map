@@ -2,6 +2,8 @@ import process from 'node:process'
 import pool from './db.js'
 import { createApp } from './app.js'
 import { createMysqlNotes } from './notes/mysqlRepository.js'
+import authRouter from './routes/auth.js'
+import { readSessionUserId } from './auth/session.js'
 
 const port = Number(process.env.PORT || 3000)
 const host = process.env.HOST || '127.0.0.1'
@@ -20,7 +22,7 @@ const devUserId = Number(process.env.DEV_USER_ID)
 if (devAuth && (!Number.isInteger(devUserId) || devUserId <= 0))
   throw new Error('DEV_USER_ID를 설정하세요.')
 
-// 로그인 담당자는 이 미들웨어 대신 검증된 세션/JWT에서 req.user = { id, role }를 연결한다.
+// 로그인 쿠키(JWT)를 검증해 req.user = { id, role }를 연결한다. role은 매번 DB에서 읽는다.
 // 요청 본문의 authorId, 임의 헤더, localStorage 역할은 인증에 사용하지 않는다.
 async function authenticate(req, res, next) {
   if (devAuth) {
@@ -38,6 +40,15 @@ async function authenticate(req, res, next) {
       [devUserId],
     )
     req.user = users[0] && { ...users[0], id: Number(users[0].id) }
+  } else {
+    const userId = readSessionUserId(req)
+    if (userId) {
+      const [users] = await pool.execute(
+        'SELECT id, role FROM users WHERE id = ? LIMIT 1',
+        [userId],
+      )
+      req.user = users[0]
+    }
   }
   next()
 }
@@ -46,6 +57,7 @@ const app = createApp({
   pool,
   repository: createMysqlNotes(pool),
   authenticate,
+  authRouter,
   allowedOrigins: (
     process.env.FRONTEND_ORIGINS ??
     'http://localhost:5173,http://127.0.0.1:5173'

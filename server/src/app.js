@@ -6,6 +6,7 @@ export function createApp({
   pool,
   repository,
   authenticate = (req, res, next) => next(),
+  authRouter,
   allowedOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'],
 } = {}) {
   const app = express()
@@ -46,6 +47,8 @@ export function createApp({
     next()
   })
   app.use(express.json({ limit: '32kb' }))
+  // 회원가입·로그인 API (index.js에서 전달, 테스트에서는 생략 가능)
+  if (authRouter) app.use('/api/auth', authRouter)
   app.use('/api', createNotesRouter({ repository, authenticate }))
   app.use((req, res) =>
     res.status(404).json({ message: 'API를 찾을 수 없습니다.' }),
