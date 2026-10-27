@@ -9,7 +9,7 @@ import { useMapCenter, useMapClick } from '../hooks/useMap.js'
 import { useLocationPicker } from '../hooks/useLocationPicker.js'
 import { useCrimeType } from '../hooks/useCrimeType.js'
 import { CRIME_TYPES, DEFAULT_CRIME_TYPE } from '../constants/crimeTypes.js'
-import { getApprovedNotes } from '../api/notesApi.js'
+import { useApprovedNotes } from '../hooks/useApprovedNotes.js'
 import styles from './ExplorePage.module.css'
 
 const RADIUS_OPTIONS = [
@@ -20,7 +20,7 @@ const RADIUS_OPTIONS = [
 // 01 지도 탐색 — 주소·장소 검색, 범죄 유형 필터, 승인된 안심노트, 중심·반경 표시
 function ExplorePage() {
   const navigate = useNavigate()
-  const [notes, setNotes] = useState([])
+  const { notes, error: notesError } = useApprovedNotes()
   const [place, setPlace] = useState(null)
   const { crimeType, setCrimeType } = useCrimeType()
   const [pointA, setPointA] = useState({ lat: 37.5665, lng: 126.978 })
@@ -48,15 +48,10 @@ function ExplorePage() {
   // 필터는 이 화면에서만 쓰므로, 다른 탭으로 가면 전체로 되돌림
   useEffect(() => () => setCrimeType(DEFAULT_CRIME_TYPE), [setCrimeType])
 
-  useEffect(() => {
-    getApprovedNotes()
-      .then(setNotes)
-      .catch(() => setNotes([]))
-  }, [])
-
   return (
     <>
       <Sidebar>
+        {notesError && <p role="status">{notesError}</p>}
         <h2 className={styles.title}>이사할 동네, 같은 기준으로 살펴봐요</h2>
         <p className={styles.label}>주소·장소 검색</p>
         {/* 검색어를 고치면 이전에 고른 장소 표시도 해제 */}
@@ -123,6 +118,7 @@ function ExplorePage() {
         <MapMarker
           key={note.id}
           type="note"
+          label={note.title}
           position={{ lat: note.latitude, lng: note.longitude }}
           onClick={() => navigate(`${ROUTES.NOTES}/${note.id}`)}
         />
