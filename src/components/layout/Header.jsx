@@ -1,5 +1,6 @@
 import { Link, NavLink } from 'react-router'
 import { ROUTES } from '../../constants/routes.js'
+import { useAuth } from '../../hooks/useAuth.js'
 import styles from './Header.module.css'
 
 const NAV_ITEMS = [
@@ -9,6 +10,8 @@ const NAV_ITEMS = [
 ]
 
 function Header() {
+  const { session, logout } = useAuth()
+
   return (
     <header className={styles.header}>
       <Link to={ROUTES.EXPLORE} className={styles.logo}>
@@ -38,9 +41,24 @@ function Header() {
         <Link to={ROUTES.POLICY} className={styles.actionButton}>
           이용 안내
         </Link>
-        <Link to={ROUTES.LOGIN} className={styles.actionButton}>
-          로그인 / 회원가입
-        </Link>
+        {/* 로그인 상태를 확인하는 동안은 버튼을 비워 깜빡임을 막음 */}
+        {session.status === 'authenticated' && (
+          <>
+            <span className={styles.userName}>{session.user.nickname}님</span>
+            <button
+              type="button"
+              className={styles.actionButton}
+              onClick={logout}
+            >
+              로그아웃
+            </button>
+          </>
+        )}
+        {session.status === 'unauthenticated' && (
+          <Link to={ROUTES.LOGIN} className={styles.actionButton}>
+            로그인 / 회원가입
+          </Link>
+        )}
       </div>
     </header>
   )
