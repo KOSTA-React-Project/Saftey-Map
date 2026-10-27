@@ -2,6 +2,9 @@ import { useEffect, useReducer, useRef, useState } from 'react'
 import Sidebar from '../components/layout/Sidebar.jsx'
 import MapMarker from '../components/map/MapMarker.jsx'
 import MapRadius from '../components/map/MapRadius.jsx'
+import PlaceSearchBox from '../components/search/PlaceSearchBox.jsx'
+import { getAddress } from '../utils/geocoder.js'
+import { useCrimeType } from '../hooks/useCrimeType.js'
 import { useMap, useMapClick } from '../hooks/useMap.js'
 import { compareReducer, initialCompareState } from '../utils/compareState.js'
 import { comparePlaces } from '../services/compareService.js'
@@ -14,6 +17,12 @@ function CompareSetupPage() {
   const controllerRef = useRef(null)
   const compareButtonRef = useRef(null)
   const map = useMap()
+  const { crimeType } = useCrimeType()
+  const [queries, setQueries] = useState({ A: null, B: null })
+  const searchRefs = useRef({})
+  const addressPending = [state.A, state.B].some(
+    (point) => point && !point.address,
+  )
 
   useEffect(() => () => controllerRef.current?.abort(), [])
 
@@ -22,12 +31,51 @@ function CompareSetupPage() {
     dispatch(action)
   }
 
+  function selectPoint(position, requestedSlot) {
+    const slot =
+      requestedSlot ?? state.editing ?? (state.lastSelected === 'A' ? 'B' : 'A')
+    const selectionId = crypto.randomUUID()
+    const fallback = position.address?.trim() || ''
+    searchRefs.current[slot]?.cancelSearch()
+    setQueries((previous) => ({ ...previous, [slot]: null }))
+    change({
+      type: 'select',
+      slot,
+      position: {
+        lat: position.lat,
+        lng: position.lng,
+        address: fallback,
+        selectionId,
+      },
+    })
+    if (requestedSlot && map) {
+      map.panTo(new window.kakao.maps.LatLng(position.lat, position.lng))
+    }
+    getAddress(position).then(
+      (address) =>
+        dispatch({
+          type: 'address',
+          slot,
+          selectionId,
+          address: address?.trim() || fallback || '주소를 확인할 수 없는 위치',
+        }),
+      () =>
+        dispatch({
+          type: 'address',
+          slot,
+          selectionId,
+          address: fallback || '주소를 확인할 수 없는 위치',
+        }),
+    )
+  }
+
   useMapClick((position) => {
-    if (state.status !== 'ready') change({ type: 'select', position })
+    if (state.status !== 'ready') selectPoint(position)
   })
 
   async function handleCompare() {
-    if (!state.A || !state.B || state.status === 'loading') return
+    if (!state.A || !state.B || addressPending || state.status === 'loading')
+      return
     controllerRef.current?.abort()
     const controller = new AbortController()
     controllerRef.current = controller
@@ -46,7 +94,7 @@ function CompareSetupPage() {
     }
   }
 
-  const nextSlot = state.editing ?? (state.A ? 'B' : 'A')
+  const nextSlot = state.editing ?? (state.lastSelected === 'A' ? 'B' : 'A')
   const count = Number(Boolean(state.A)) + Number(Boolean(state.B))
   const footer = (
     <div className={styles.footer}>
@@ -54,7 +102,9 @@ function CompareSetupPage() {
         ref={compareButtonRef}
         type="button"
         className={styles.primary}
-        disabled={!state.A || !state.B || state.status === 'loading'}
+        disabled={
+          !state.A || !state.B || addressPending || state.status === 'loading'
+        }
         onClick={handleCompare}
       >
         {state.status === 'loading'
@@ -64,7 +114,13 @@ function CompareSetupPage() {
       <button
         type="button"
         className={styles.button}
-        onClick={() => change({ type: 'reset' })}
+        onClick={() => {
+          Object.values(searchRefs.current).forEach((search) =>
+            search?.cancelSearch(),
+          )
+          setQueries({ A: null, B: null })
+          change({ type: 'reset' })
+        }}
       >
         지점 초기화
       </button>
@@ -90,12 +146,23 @@ function CompareSetupPage() {
             <h2 id="point-heading">1 비교 지점</h2>
             {['A', 'B'].map((slot) => (
               <div className={styles.point} key={slot}>
-                <label htmlFor={`point-${slot}`}>{slot} 지점</label>
-                <output id={`point-${slot}`} className={styles.coordinate}>
+                <strong>{slot} 지점</strong>
+                <PlaceSearchBox
+                  ref={(instance) => {
+                    searchRefs.current[slot] = instance
+                  }}
+                  value={queries[slot] ?? state[slot]?.address ?? ''}
+                  onValueChange={(value) =>
+                    setQueries((previous) => ({ ...previous, [slot]: value }))
+                  }
+                  onSelect={(position) => selectPoint(position, slot)}
+                  placeholder={`${slot} 지점 주소나 장소 검색`}
+                />
+                <p className={styles.pointAddress} role="status">
                   {state[slot]
-                    ? `위도 ${state[slot].lat.toFixed(5)} / 경도 ${state[slot].lng.toFixed(5)}`
-                    : '지도에서 선택해 주세요'}
-                </output>
+                    ? `선택한 주소: ${state[slot].address || '주소 확인 중…'}`
+                    : '검색 결과를 선택하거나 지도에서 지점을 골라 주세요.'}
+                </p>
                 <button
                   type="button"
                   className={styles.button}
@@ -107,13 +174,8 @@ function CompareSetupPage() {
               </div>
             ))}
             <p className={styles.notice} role="status">
-              {state.editing
-                ? `다음 지도 클릭에서 ${nextSlot} 지점을 선택·수정합니다.`
-                : !state.A
-                  ? '첫 지도 클릭은 A, 그다음부터는 B가 됩니다.'
-                  : !state.B
-                    ? '다음 지도 클릭은 B 지점이 됩니다.'
-                    : '지도를 누르면 B가 이동합니다. A를 바꾸려면 A 수정 버튼을 눌러 주세요.'}
+              다음 지도 클릭은 {nextSlot} 지점을 선택·수정합니다. 지점을 변경할
+              때마다 다음 선택 지점은 A/B로 번갈아 바뀝니다.
             </p>
             {!map && (
               <p role="status">
@@ -169,8 +231,8 @@ function CompareSetupPage() {
             </p>
           )}
           <p>
-            지도는 Kakao Maps, 결과 수치는 가상 fixture입니다. 실제 WMS나 범죄
-            확률을 분석하지 않습니다.
+            지도는 Kakao Maps와 생활안전지도 WMS를 표시합니다. 결과 수치는 별도
+            가상 fixture이며 지도 이미지나 범죄 확률을 분석하지 않습니다.
           </p>
         </div>
       </Sidebar>
@@ -181,6 +243,7 @@ function CompareSetupPage() {
       {state.status === 'ready' && state.result && (
         <CompareResultModal
           result={state.result}
+          crimeType={crimeType}
           onClose={() => {
             dispatch({ type: 'close' })
             requestAnimationFrame(() => compareButtonRef.current?.focus())

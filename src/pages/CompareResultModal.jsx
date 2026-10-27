@@ -2,9 +2,43 @@ import { useEffect, useRef, useState } from 'react'
 import MapView from '../components/map/MapView.jsx'
 import MapMarker from '../components/map/MapMarker.jsx'
 import MapRadius from '../components/map/MapRadius.jsx'
+import CrimeLayer from '../components/map/CrimeLayer.jsx'
 import styles from './CompareSetupPage.module.css'
 
-function CompareResultModal({ result, onClose }) {
+// 탭에 가려진 지도가 다시 보이거나 화면 크기가 바뀌어도 선택 지점을 중앙에 유지한다.
+function ResultMap({ point, radius, slot, crimeType }) {
+  const containerRef = useRef(null)
+  const [map, setMap] = useState(null)
+
+  useEffect(() => {
+    if (!map) return
+    const observer = new ResizeObserver(() => {
+      map.relayout()
+      map.setCenter(new window.kakao.maps.LatLng(point.lat, point.lng))
+    })
+    observer.observe(containerRef.current)
+    return () => observer.disconnect()
+  }, [map, point.lat, point.lng])
+
+  return (
+    <div ref={containerRef} className={styles.resultMap}>
+      <MapView
+        center={point}
+        level={radius === 500 ? 4 : radius === 1000 ? 5 : 6}
+        interactive={false}
+        showControls={false}
+        onCreate={setMap}
+        className={styles.resultMapCanvas}
+      >
+        <CrimeLayer crimeType={crimeType} />
+        <MapMarker type={slot} position={point} />
+        <MapRadius center={point} radius={radius} />
+      </MapView>
+    </div>
+  )
+}
+
+function CompareResultModal({ result, crimeType, onClose }) {
   const dialogRef = useRef(null)
   const [tab, setTab] = useState('A')
 
@@ -34,8 +68,8 @@ function CompareResultModal({ result, onClose }) {
           <p className={styles.eyebrow}>COMPARE / 02 · 예시 결과</p>
           <h2 id="compare-result-title">두 동네를 같은 반경으로 나란히</h2>
           <p>
-            동일 반경 {result.conditions.radius}m · 동일 지도 축척 · 실제 WMS
-            미연결
+            동일 반경 {result.conditions.radius}m · 동일 지도 축척 ·
+            생활안전지도 WMS 중첩 · 아래 분석 수치는 별도 예시
           </p>
         </div>
         <button
@@ -93,25 +127,13 @@ function CompareResultModal({ result, onClose }) {
               className={`${styles.resultCard} ${tab !== slot ? styles.inactive : ''}`}
             >
               <h3>{slot} 지점 주변</h3>
-              <p>
-                위도 {point.lat.toFixed(5)} / 경도 {point.lng.toFixed(5)}
-              </p>
-              <MapView
-                center={point}
-                level={
-                  result.conditions.radius === 500
-                    ? 4
-                    : result.conditions.radius === 1000
-                      ? 5
-                      : 6
-                }
-                interactive={false}
-                showControls={false}
-                className={styles.resultMap}
-              >
-                <MapMarker type={slot} position={point} />
-                <MapRadius center={point} radius={result.conditions.radius} />
-              </MapView>
+              <p>{point.address || '주소를 확인할 수 없는 위치'}</p>
+              <ResultMap
+                point={point}
+                radius={result.conditions.radius}
+                slot={slot}
+                crimeType={crimeType}
+              />
               <span className={styles.badge}>색상 분포 요약 지수 · 예시</span>
               <p className={styles.score}>
                 {data.score.toFixed(1)}
