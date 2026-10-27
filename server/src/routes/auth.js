@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { Router } from 'express'
+import { rateLimit } from 'express-rate-limit'
 import pool from '../db.js'
 import { hashPassword, verifyPassword } from '../auth/password.js'
 import {
@@ -18,8 +19,33 @@ import {
 //   POST /api/auth/login   → 200 { user }
 //   POST /api/auth/logout  → 204
 //   GET  /api/auth/me      → 200 { user } (로그인하지 않았으면 user: null)
-// 실패 응답은 { message }
+// 실패 응답은 { message }. 요청이 너무 많으면 429
 const router = Router()
+
+// 같은 IP의 요청 횟수 제한 (서버 메모리에 기록, 재시작하면 초기화)
+// 프록시 뒤에서는 TRUST_PROXY를 설정해야 사용자별 IP로 센다 (index.js)
+const TOO_MANY_REQUESTS = {
+  message: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.',
+}
+
+// 로그인: 15분에 실패 10번. 성공한 요청은 세지 않음 (비밀번호 대입 방지)
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  skipSuccessfulRequests: true,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: TOO_MANY_REQUESTS,
+})
+
+// 회원가입: 1시간에 50번 (같은 와이파이에서 여러 명이 가입해도 막히지 않을 정도)
+const signupLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 50,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: TOO_MANY_REQUESTS,
+})
 
 const DUPLICATE_EMAIL = '이미 가입된 이메일입니다.'
 const DUPLICATE_NICKNAME = '이미 사용 중인 닉네임입니다.'
@@ -28,7 +54,7 @@ function toPublicUser({ id, email, nickname, role }) {
   return { id, email, nickname, role }
 }
 
-router.post('/signup', async (req, res) => {
+router.post('/signup', signupLimiter, async (req, res) => {
   const body = req.body ?? {}
   const errors = validateSignup(body)
   if (errors.length > 0) {
@@ -73,7 +99,7 @@ router.post('/signup', async (req, res) => {
   res.status(201).json({ user })
 })
 
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   const body = req.body ?? {}
   const errors = validateLogin(body)
   if (errors.length > 0) {

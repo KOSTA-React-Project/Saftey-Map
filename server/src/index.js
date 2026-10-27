@@ -66,6 +66,11 @@ const app = createApp({
     .map((s) => s.trim()),
 })
 
+// nginx 같은 프록시 뒤에서 실행하면 프록시 단계 수(보통 1)를 지정해 실제 사용자 IP를 읽는다
+// (로그인·회원가입 요청 횟수 제한이 사용자별로 동작하도록). 비어 있으면 사용 안 함
+const trustProxy = Number(process.env.TRUST_PROXY || 0)
+if (trustProxy > 0) app.set('trust proxy', trustProxy)
+
 const server = app.listen(port, host, () => {
   console.log(`서버 실행: http://${host}:${port}`)
   if (devAuth)
