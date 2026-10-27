@@ -1,14 +1,12 @@
-// 회원 API — 서버 구현 전 임시(mock) 버전. localStorage에 저장한다.
-// 서버가 생기면 각 함수 안을 fetch 호출로 바꾸면 되고, 화면 코드는 그대로 쓸 수 있다.
+// 회원 API — server/src/routes/auth.js 호출
 //   POST /api/auth/signup  → signup (가입 후 바로 로그인)
 //   POST /api/auth/login   → login
 //   POST /api/auth/logout  → logout
 //   GET  /api/auth/me      → getCurrentUser
-// 브라우저 저장은 데모용이다. 실제 서비스에선 서버가 비밀번호를 솔트와 함께
-// 느린 해시(bcrypt 등)로 저장하고, 세션은 HttpOnly 쿠키로 관리해야 한다.
+// 로그인 상태는 서버가 HttpOnly 쿠키로 관리하므로 프론트는 토큰을 직접 다루지 않는다.
+// 개발 중에는 vite.config.js의 proxy가 /api 요청을 서버(localhost:3000)로 넘긴다.
 
-const USERS_KEY = 'safety-map:users'
-const SESSION_KEY = 'safety-map:session'
+const BASE_URL = '/api/auth'
 
 export const PASSWORD_MIN = 8
 export const PASSWORD_MAX = 64
@@ -24,64 +22,32 @@ export class ApiError extends Error {
   }
 }
 
-function readUsers() {
-  const saved = localStorage.getItem(USERS_KEY)
-  if (saved == null) return []
-  let users
+// 실패하면 서버의 { message }를 담은 ApiError를 던진다. 서버에 닿지 못하면 status 0
+async function request(path, { method = 'GET', body } = {}) {
+  let response
   try {
-    users = JSON.parse(saved)
+    response = await fetch(`${BASE_URL}${path}`, {
+      method,
+      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+      credentials: 'same-origin',
+    })
   } catch {
-    users = null
+    throw new ApiError(
+      0,
+      '서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.',
+    )
   }
-  if (!Array.isArray(users)) {
-    throw new ApiError(500, '저장된 회원 정보를 읽을 수 없습니다.')
+
+  if (response.status === 204) return null
+  const data = await response.json().catch(() => null)
+  if (!response.ok) {
+    throw new ApiError(
+      response.status,
+      data?.message ?? '요청을 처리하지 못했습니다. 잠시 후 다시 시도해주세요.',
+    )
   }
-  return users
-}
-
-function writeUsers(users) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users))
-}
-
-// 세션 값이 깨져 있으면 로그아웃 상태로 본다.
-function readSessionUserId() {
-  try {
-    return JSON.parse(localStorage.getItem(SESSION_KEY))?.userId ?? null
-  } catch {
-    return null
-  }
-}
-
-function startSession(userId) {
-  localStorage.setItem(SESSION_KEY, JSON.stringify({ userId }))
-}
-
-// 네트워크 요청처럼 비동기로 동작하게 한다.
-function respond(value) {
-  return new Promise((resolve) => setTimeout(() => resolve(value), 100))
-}
-
-function fail(status, message) {
-  return new Promise((_, reject) =>
-    setTimeout(() => reject(new ApiError(status, message)), 100),
-  )
-}
-
-function normalizeEmail(email) {
-  return (email ?? '').trim().toLowerCase()
-}
-
-async function hashPassword(email, password) {
-  const data = new TextEncoder().encode(`${email}:${password}`)
-  const digest = await crypto.subtle.digest('SHA-256', data)
-  return [...new Uint8Array(digest)]
-    .map((byte) => byte.toString(16).padStart(2, '0'))
-    .join('')
-}
-
-// 비밀번호 해시는 응답에 포함하지 않는다.
-function toPublicUser({ id, email, nickname, role }) {
-  return { id, email, nickname, role }
+  return data
 }
 
 function validateEmail(email, errors) {
@@ -91,7 +57,7 @@ function validateEmail(email, errors) {
     errors.push('이메일 형식이 올바르지 않습니다.')
 }
 
-// 서버에서도 똑같이 검사해야 하는 입력값 규칙. 오류 메시지 배열을 돌려준다.
+// 서버(server/src/validation/auth.js)에서도 같은 규칙으로 검사한다. 오류 메시지 배열을 돌려준다.
 export function validateSignup({
   email,
   nickname,
@@ -132,58 +98,39 @@ export function validateLogin({ email, password }) {
 
 export async function signup(input) {
   const errors = validateSignup(input)
-  if (errors.length > 0) return fail(400, errors.join(' '))
+  if (errors.length > 0) throw new ApiError(400, errors.join(' '))
 
-  const email = normalizeEmail(input.email)
-  // 해시를 먼저 계산해 목록 읽기~저장 사이에 대기가 없게 함 (동시 가입 시 덮어쓰기 방지)
-  const passwordHash = await hashPassword(email, input.password)
-
-  const users = readUsers()
-  if (users.some((user) => user.email === email)) {
-    return fail(409, '이미 가입된 이메일입니다.')
-  }
-
-  const user = {
-    id: crypto.randomUUID(),
-    email,
-    nickname: input.nickname.trim(),
-    role: 'USER', // 입력에 role이 있어도 무시. ADMIN은 서버에서만 부여
-    passwordHash,
-    createdAt: new Date().toISOString(),
-  }
-  writeUsers([...users, user])
-  startSession(user.id)
-  return respond(toPublicUser(user))
+  // 비밀번호 확인은 화면에서만 검사하므로 보내지 않는다.
+  const { user } = await request('/signup', {
+    method: 'POST',
+    body: {
+      email: input.email,
+      nickname: input.nickname,
+      password: input.password,
+      agreed: input.agreed,
+    },
+  })
+  return user
 }
 
 export async function login(input) {
   const errors = validateLogin(input)
-  if (errors.length > 0) return fail(400, errors.join(' '))
+  if (errors.length > 0) throw new ApiError(400, errors.join(' '))
 
-  const email = normalizeEmail(input.email)
-  const user = readUsers().find((item) => item.email === email)
-  const passwordHash = await hashPassword(email, input.password)
-  // 이메일과 비밀번호 중 무엇이 틀렸는지 알려주지 않는다.
-  if (!user || user.passwordHash !== passwordHash) {
-    return fail(401, '이메일 또는 비밀번호가 올바르지 않습니다.')
-  }
-  startSession(user.id)
-  return respond(toPublicUser(user))
+  const { user } = await request('/login', {
+    method: 'POST',
+    body: { email: input.email, password: input.password },
+  })
+  return user
 }
 
 export async function logout() {
-  localStorage.removeItem(SESSION_KEY)
-  return respond(null)
+  await request('/logout', { method: 'POST' })
+  return null
 }
 
 // 로그인하지 않았으면 null
 export async function getCurrentUser() {
-  const userId = readSessionUserId()
-  if (userId == null) return respond(null)
-  const user = readUsers().find((item) => item.id === userId)
-  if (!user) {
-    localStorage.removeItem(SESSION_KEY)
-    return respond(null)
-  }
-  return respond(toPublicUser(user))
+  const data = await request('/me')
+  return data?.user ?? null
 }
