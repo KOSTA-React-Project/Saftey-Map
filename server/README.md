@@ -90,6 +90,13 @@ npm run lint
 npm run build
 ```
 
-API만 확인: `npm run test:api`.
+`npm test`는 브라우저 없이 돌아가는 서버 API 테스트만 실행한다(`npm run test:api`와 같다).
+
+화면까지 확인하는 브라우저 테스트는 따로 실행한다. 처음 한 번 Playwright 브라우저를 설치해야 한다.
+
+```powershell
+npx playwright install chromium
+npm run test:e2e
+```
 
 참고 API 문서: [Express](https://expressjs.com/en/5x/api/), [mysql2](https://sidorares.github.io/node-mysql2/docs).

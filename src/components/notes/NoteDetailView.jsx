@@ -3,8 +3,17 @@ import { useMapCenter } from '../../hooks/useMap.js'
 import { getApprovedNote } from '../../api/notesApi.js'
 import styles from './NoteDetailView.module.css'
 
+// 날짜만 있는 값(관찰한 날, YYYY-MM-DD)은 그대로 표시
 function formatDate(iso) {
   return iso.slice(0, 10).replaceAll('-', '.')
+}
+
+// 서버의 시각(UTC)은 사용자 지역 날짜로 바꿔 표시 (한국 새벽에 하루 전으로 보이지 않게)
+function formatLocalDate(iso) {
+  const date = new Date(iso)
+  return [date.getFullYear(), date.getMonth() + 1, date.getDate()]
+    .map((part) => String(part).padStart(2, '0'))
+    .join('.')
 }
 
 // 안심노트 상세 내용 — 승인된 노트만 열린다. 작성자 이름은 보여주지 않음
@@ -36,7 +45,7 @@ function NoteDetailView({ id }) {
       <span className={styles.chip}>주민 관찰 기록</span>
       <p className={styles.tag}>{note.tag}</p>
       <h2 className={styles.title}>{note.title}</h2>
-      <p className={styles.meta}>작성 {formatDate(note.createdAt)}</p>
+      <p className={styles.meta}>작성 {formatLocalDate(note.createdAt)}</p>
 
       <dl className={styles.info}>
         <dt>관찰한 날</dt>
