@@ -134,8 +134,11 @@ export async function signup(input) {
   const errors = validateSignup(input)
   if (errors.length > 0) return fail(400, errors.join(' '))
 
-  const users = readUsers()
   const email = normalizeEmail(input.email)
+  // 해시를 먼저 계산해 목록 읽기~저장 사이에 대기가 없게 함 (동시 가입 시 덮어쓰기 방지)
+  const passwordHash = await hashPassword(email, input.password)
+
+  const users = readUsers()
   if (users.some((user) => user.email === email)) {
     return fail(409, '이미 가입된 이메일입니다.')
   }
@@ -145,7 +148,7 @@ export async function signup(input) {
     email,
     nickname: input.nickname.trim(),
     role: 'USER', // 입력에 role이 있어도 무시. ADMIN은 서버에서만 부여
-    passwordHash: await hashPassword(email, input.password),
+    passwordHash,
     createdAt: new Date().toISOString(),
   }
   writeUsers([...users, user])
