@@ -6,6 +6,7 @@ import MapMarker from '../components/map/MapMarker.jsx'
 import MapRadius from '../components/map/MapRadius.jsx'
 import PlaceSearchBox from '../components/search/PlaceSearchBox.jsx'
 import { useMapCenter, useMapClick } from '../hooks/useMap.js'
+import { useLocationPicker } from '../hooks/useLocationPicker.js'
 import { useCrimeType } from '../hooks/useCrimeType.js'
 import { CRIME_TYPES, DEFAULT_CRIME_TYPE } from '../constants/crimeTypes.js'
 import { getApprovedNotes } from '../api/notesApi.js'
@@ -25,17 +26,21 @@ function ExplorePage() {
   const [pointA, setPointA] = useState({ lat: 37.5665, lng: 126.978 })
   const [radius, setRadius] = useState(500)
 
-  // 지도를 누르면 그 지점이 중심(A). 검색으로 고른 장소 표시는 해제
+  // 검색한 곳으로 지도를 옮기고 중심도 그곳으로
+  const { pickFromMap, searchBoxProps } = useLocationPicker({
+    onSearchSelect: (result) => {
+      setPlace(result)
+      setPointA({ lat: result.lat, lng: result.lng })
+    },
+  })
+
+  // 지도를 누르면 그 지점이 중심(A)이고, 검색 칸에 그곳 주소가 자동으로 들어감
+  // 검색으로 고른 장소 표시는 해제
   useMapClick((point) => {
     setPlace(null)
     setPointA(point)
+    pickFromMap(point)
   })
-
-  // 검색한 곳으로 지도를 옮기고 중심도 그곳으로
-  const selectPlace = (result) => {
-    setPlace(result)
-    setPointA({ lat: result.lat, lng: result.lng })
-  }
 
   // 검색한 위치로 지도 이동
   useMapCenter(place)
@@ -54,7 +59,7 @@ function ExplorePage() {
       <Sidebar>
         <h2 className={styles.title}>이사할 동네, 같은 기준으로 살펴봐요</h2>
         <p className={styles.label}>주소·장소 검색</p>
-        <PlaceSearchBox onSelect={selectPlace} />
+        <PlaceSearchBox {...searchBoxProps} />
         {place && (
           <p className={styles.selected}>
             <strong>{place.label}</strong>
