@@ -1,4 +1,5 @@
-import { useEffect, useReducer, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useReducer, useRef, useState } from 'react'
+import { useLocation } from 'react-router'
 import Sidebar from '../components/layout/Sidebar.jsx'
 import MapMarker from '../components/map/MapMarker.jsx'
 import MapRadius from '../components/map/MapRadius.jsx'
@@ -11,8 +12,34 @@ import { comparePlaces } from '../services/compareService.js'
 import CompareResultModal from './CompareResultModal.jsx'
 import styles from './CompareSetupPage.module.css'
 
+const EXPLORE_SELECTION = 'explore'
+
+// 지도 탐색의 '이 위치로 비교하기'로 들어오면 그 지점을 A로, 반경도 그대로 시작
+function stateFromExplore(from) {
+  if (!from?.A) return initialCompareState
+  const { lat, lng, address } = from.A
+  return [
+    { type: 'radius', radius: from.radius },
+    {
+      type: 'select',
+      slot: 'A',
+      position: {
+        lat,
+        lng,
+        address: address?.trim() || '',
+        selectionId: EXPLORE_SELECTION,
+      },
+    },
+  ].reduce(compareReducer, initialCompareState)
+}
+
 function CompareSetupPage() {
-  const [state, dispatch] = useReducer(compareReducer, initialCompareState)
+  const { state: fromExplore } = useLocation()
+  const [state, dispatch] = useReducer(
+    compareReducer,
+    fromExplore,
+    stateFromExplore,
+  )
   const [scenario, setScenario] = useState('normal')
   const controllerRef = useRef(null)
   const compareButtonRef = useRef(null)
@@ -72,6 +99,23 @@ function CompareSetupPage() {
   useMapClick((position) => {
     if (state.status !== 'ready') selectPoint(position)
   })
+
+  // 탐색에서 넘어온 A로 지도를 옮기고, 주소 없이 왔으면 여기서 찾음
+  const locateFromExplore = useEffectEvent(() => {
+    const point = state.A
+    if (point?.selectionId !== EXPLORE_SELECTION) return
+    map?.panTo(new window.kakao.maps.LatLng(point.lat, point.lng))
+    if (point.address) return
+    const done = (address) =>
+      dispatch({
+        type: 'address',
+        slot: 'A',
+        selectionId: EXPLORE_SELECTION,
+        address: address?.trim() || '주소를 확인할 수 없는 위치',
+      })
+    getAddress(point).then(done, () => done(null))
+  })
+  useEffect(() => locateFromExplore(), [])
 
   async function handleCompare() {
     if (!state.A || !state.B || addressPending || state.status === 'loading')
