@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { ROUTES } from '../constants/routes.js'
 import MapView from '../components/map/MapView.jsx'
 import MapMarker from '../components/map/MapMarker.jsx'
 import PlaceSearchBox from '../components/search/PlaceSearchBox.jsx'
 import { useMapCenter } from '../hooks/useMap.js'
+import { useLocationPicker } from '../hooks/useLocationPicker.js'
 import {
   CONTENT_MAX,
   TAG_MAX,
@@ -14,7 +15,6 @@ import {
   getLocalToday,
   validateNote,
 } from '../api/notesApi.js'
-import { getAddress } from '../utils/geocoder.js'
 import styles from './NoteComposePage.module.css'
 
 const EMPTY_FORM = {
@@ -24,8 +24,6 @@ const EMPTY_FORM = {
   content: '',
   agreed: false,
 }
-
-const UNKNOWN_ADDRESS = '주소를 확인할 수 없는 위치'
 
 // MapView 안에서 검색한 위치로 지도 중심을 옮김
 function CenterOn({ position }) {
@@ -39,16 +37,14 @@ function NoteComposePage() {
   const navigate = useNavigate()
   const [form, setForm] = useState(EMPTY_FORM)
   const [approvedNotes, setApprovedNotes] = useState([])
-  const [location, setLocation] = useState(null)
-  const [locationQuery, setLocationQuery] = useState('')
   const [searched, setSearched] = useState(null)
-  // 위치를 연달아 고를 때 늦게 온 주소 조회 결과를 버리기 위한 요청 번호
-  const addressRequestRef = useRef(0)
-  const searchRef = useRef(null)
+  const { location, isLocating, pickFromMap, searchBoxProps } =
+    useLocationPicker({
+      onSearchSelect: ({ lat, lng }) => setSearched({ lat, lng }),
+    })
   const [errors, setErrors] = useState([])
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
-  const isLocating = location != null && location.address === undefined
 
   // TODO: 로그인 기능 완성 후, 로그인하지 않았으면 안내문을 띄우고 로그인 페이지로 이동
 
@@ -61,37 +57,6 @@ function NoteComposePage() {
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
     setForm({ ...form, [name]: type === 'checkbox' ? checked : value })
-  }
-
-  // fallbackAddress: 주소 조회가 실패하면 대신 쓸 주소 (검색 결과의 주소)
-  const pickLocation = ({ lat, lng }, fallbackAddress = null) => {
-    const requestId = ++addressRequestRef.current
-    const normalizedFallback = fallbackAddress?.trim() || undefined
-    setLocation({ lat, lng, address: normalizedFallback })
-    setLocationQuery(normalizedFallback ?? '주소 확인 중…')
-    getAddress({ lat, lng }).then((found) => {
-      if (requestId !== addressRequestRef.current) return
-      const address = found?.trim() || normalizedFallback || UNKNOWN_ADDRESS
-      setLocation({ lat, lng, address })
-      setLocationQuery(address)
-    })
-  }
-
-  const handleMapPick = (position) => {
-    searchRef.current?.cancelSearch()
-    pickLocation(position)
-  }
-
-  const handleSearchSelect = ({ lat, lng, address }) => {
-    setSearched({ lat, lng })
-    pickLocation({ lat, lng }, address)
-  }
-
-  // 위치 칸을 고쳐 쓰면 이전에 고른 위치는 무효 (다시 고르거나 지도를 눌러야 함)
-  const handleLocationQueryChange = (next) => {
-    addressRequestRef.current += 1
-    setLocationQuery(next)
-    setLocation(null)
   }
 
   const handleSubmit = async (e) => {
@@ -191,13 +156,7 @@ function NoteComposePage() {
 
           <div className={styles.field}>
             <span className={styles.fieldLabel}>위치 *</span>
-            <PlaceSearchBox
-              ref={searchRef}
-              value={locationQuery}
-              onValueChange={handleLocationQueryChange}
-              onSelect={handleSearchSelect}
-              selectFirst
-            />
+            <PlaceSearchBox {...searchBoxProps} selectFirst />
             <span className={styles.hint}>
               지도를 눌러도 위치를 정할 수 있어요.
             </span>
@@ -264,7 +223,7 @@ function NoteComposePage() {
         </form>
 
         <div className={styles.side}>
-          <MapView className={styles.map} onClick={handleMapPick}>
+          <MapView className={styles.map} onClick={pickFromMap}>
             {approvedNotes.map((note) => (
               <MapMarker
                 key={note.id}
