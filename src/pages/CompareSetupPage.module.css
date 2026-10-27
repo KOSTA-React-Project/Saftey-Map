@@ -48,14 +48,11 @@
 .point label {
   font-weight: var(--font-weight-bold);
 }
-.coordinate {
-  display: block;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-16);
-  color: var(--color-secondary);
+.pointAddress {
+  font-size: var(--font-size-xs);
   overflow-wrap: anywhere;
 }
+
 .button,
 .primary {
   min-height: var(--touch-target);
@@ -174,6 +171,9 @@
   height: calc(var(--space-48) * 6);
   border-radius: var(--radius-md);
   overflow: hidden;
+}
+.resultMapCanvas {
+  height: 100%;
 }
 .resultCard .score {
   color: var(--color-text);

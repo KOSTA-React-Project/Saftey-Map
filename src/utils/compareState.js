@@ -2,6 +2,7 @@ export const initialCompareState = {
   A: null,
   B: null,
   editing: null,
+  lastSelected: null,
   radius: 1000,
   revision: 0,
   status: 'idle',
@@ -29,10 +30,13 @@ export function compareReducer(state, action) {
       }
     case 'select': {
       if (!isValidPosition(action.position)) return state
-      const slot = state.editing ?? (state.A ? 'B' : 'A')
+      const slot =
+        action.slot ?? state.editing ?? (state.lastSelected === 'A' ? 'B' : 'A')
+      if (!['A', 'B'].includes(slot)) return state
       return {
         ...state,
         [slot]: action.position,
+        lastSelected: slot,
         editing: null,
         revision: state.revision + 1,
         status: 'idle',
@@ -40,6 +44,16 @@ export function compareReducer(state, action) {
         error: '',
       }
     }
+    case 'address':
+      if (
+        !state[action.slot] ||
+        state[action.slot].selectionId !== action.selectionId
+      )
+        return state
+      return {
+        ...state,
+        [action.slot]: { ...state[action.slot], address: action.address },
+      }
     case 'radius':
       if (![500, 1000].includes(action.radius)) return state
       return {
