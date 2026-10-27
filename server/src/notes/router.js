@@ -15,8 +15,16 @@ function idOf(value) {
   return Number(value)
 }
 
+// 회원 ID는 서버가 만드는 UUID (노션 DB ERD의 users.id CHAR(36))
+const USER_ID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+export function isUserId(value) {
+  return typeof value === 'string' && USER_ID_PATTERN.test(value)
+}
+
 function requireUser(req, res, next) {
-  if (!req.user || !Number.isInteger(req.user.id) || req.user.id <= 0) {
+  if (!req.user || !isUserId(req.user.id)) {
     throw new HttpError(401, '로그인이 필요합니다.')
   }
   next()

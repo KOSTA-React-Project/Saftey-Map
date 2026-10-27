@@ -64,7 +64,7 @@ test('조회 버튼 없이 메인 지도에 승인 노트 표시, 마커 클릭�
     repository,
     allowedOrigins,
     authenticate(req, res, next) {
-      req.user = { id: 1, role: 'ADMIN' }
+      req.user = { id: '00000000-0000-4000-8000-000000000001', role: 'ADMIN' }
       next()
     },
   }).listen(0, '127.0.0.1')
