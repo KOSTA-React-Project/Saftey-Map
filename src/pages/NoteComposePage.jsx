@@ -84,7 +84,15 @@ function NoteComposePage() {
       setSubmitted(true)
     } catch (err) {
       // 로그인이 만료됐으면 로그아웃 상태로 바꿔 아래에서 로그인 화면으로 이동
-      if (err.status === 401) await logout().catch(() => {})
+      // 로그아웃 요청마저 실패하면 페이지를 새로 열어 로그인 상태를 다시 확인
+      if (err.status === 401) {
+        try {
+          await logout()
+        } catch {
+          window.location.assign(ROUTES.LOGIN)
+          return
+        }
+      }
       setErrors([err.message])
     } finally {
       setSubmitting(false)
