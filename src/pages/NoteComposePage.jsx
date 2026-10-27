@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { Navigate, useNavigate } from 'react-router'
 import { ROUTES } from '../constants/routes.js'
+import { useAuth } from '../hooks/useAuth.js'
 import MapView from '../components/map/MapView.jsx'
 import MapMarker from '../components/map/MapMarker.jsx'
 import PlaceSearchBox from '../components/search/PlaceSearchBox.jsx'
@@ -16,6 +17,8 @@ import {
   validateNote,
 } from '../api/notesApi.js'
 import styles from './NoteComposePage.module.css'
+
+const COMPOSE_PATH = `${ROUTES.NOTES}/new`
 
 const EMPTY_FORM = {
   title: '',
@@ -35,6 +38,7 @@ function CenterOn({ position }) {
 // 위치 칸에서 검색하거나 지도를 누르면 바로 위치가 정해짐 (좌표는 저장용, 화면엔 주소만)
 function NoteComposePage() {
   const navigate = useNavigate()
+  const { session, logout } = useAuth()
   const [form, setForm] = useState(EMPTY_FORM)
   const [approvedNotes, setApprovedNotes] = useState([])
   const [searched, setSearched] = useState(null)
@@ -45,8 +49,6 @@ function NoteComposePage() {
   const [errors, setErrors] = useState([])
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
-
-  // TODO: 로그인 기능 완성 후, 로그인하지 않았으면 안내문을 띄우고 로그인 페이지로 이동
 
   useEffect(() => {
     getApprovedNotes()
@@ -81,10 +83,27 @@ function NoteComposePage() {
       await createNote(input)
       setSubmitted(true)
     } catch (err) {
+      // 로그인이 만료됐으면 로그아웃 상태로 바꿔 아래에서 로그인 화면으로 이동
+      // 로그아웃 요청마저 실패하면 페이지를 새로 열어 로그인 상태를 다시 확인
+      if (err.status === 401) {
+        try {
+          await logout()
+        } catch {
+          window.location.assign(ROUTES.LOGIN)
+          return
+        }
+      }
       setErrors([err.message])
     } finally {
       setSubmitting(false)
     }
+  }
+
+  // 로그인 확인 중에는 아무것도 그리지 않음 (작성 화면이 잠깐 보였다 사라지지 않게)
+  if (session.status === 'loading') return null
+  // 로그인하지 않았으면 로그인 화면으로. 로그인하면 state.from(작성 화면)으로 돌아옴
+  if (session.status === 'unauthenticated') {
+    return <Navigate to={ROUTES.LOGIN} replace state={{ from: COMPOSE_PATH }} />
   }
 
   if (submitted) {
