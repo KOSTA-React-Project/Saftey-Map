@@ -1,24 +1,13 @@
-import { CRIME_LAYER } from '../constants/crimeTypes.js'
+// 원천 API 키는 서버에만 두고 브라우저에서는 같은 출처 API를 호출한다.
+export const hasSafemapKey = import.meta.env.VITE_WMS_ENABLED !== 'false'
 
-const WMS_URL = 'https://www.safemap.go.kr/openapi2/IF_0087_WMS'
-const SAFEMAP_KEY = import.meta.env.VITE_SAFEMAP_KEY
-
-export const hasSafemapKey = Boolean(SAFEMAP_KEY)
-
-// 생활안전지도 범죄주의구간 WMS 그림 주소 (bbox: EPSG:5181, size: px, style: 유형별 스타일)
 export function getCrimeImageUrl(bbox, size, style) {
   const params = new URLSearchParams({
-    serviceKey: SAFEMAP_KEY,
-    layers: CRIME_LAYER,
-    styles: style,
-    srs: 'EPSG:5181',
     bbox: bbox.join(','),
-    format: 'image/png',
-    width: String(size),
-    height: String(size),
-    transparent: 'TRUE',
+    size: String(size),
+    style,
   })
-  return `${WMS_URL}?${params}`
+  return `/api/public-data/crime-image?${params}`
 }
 
 // 서버가 캐시를 막아서(no-store) 받은 그림을 직접 보관해 같은 그림은 한 번만 요청
@@ -57,14 +46,9 @@ let legendRequest = null
 // 공식 10등급 범례 색상 [{ grade, color }]. 앱에서 한 번만 요청
 export function fetchCrimeLegend() {
   if (!legendRequest) {
-    const params = new URLSearchParams({
-      serviceKey: SAFEMAP_KEY,
-      intId: 'IF_0087',
+    legendRequest = fetch('/api/public-data/crime-legend', {
+      credentials: 'omit',
     })
-    legendRequest = fetch(
-      `https://www.safemap.go.kr/openapi2/lgdInfo?${params}`,
-      { credentials: 'omit' },
-    )
       .then((response) => response.json())
       .then((data) => {
         if (data.header?.resultCode !== '00') {

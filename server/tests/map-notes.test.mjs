@@ -102,7 +102,7 @@ test('조회 버튼 없이 메인 지도에 승인 노트 표시, 마커 클릭�
     },
     define: {
       'import.meta.env.VITE_KAKAO_MAP_KEY': JSON.stringify('test-key'),
-      'import.meta.env.VITE_SAFEMAP_KEY': JSON.stringify(''),
+      'import.meta.env.VITE_WMS_ENABLED': JSON.stringify('false'),
     },
   })
   await vite.listen()
@@ -235,7 +235,7 @@ test('관리자 화면의 서버 페이지·검색·마지막 사유·인증 안
     },
     define: {
       'import.meta.env.VITE_KAKAO_MAP_KEY': JSON.stringify('test-key'),
-      'import.meta.env.VITE_SAFEMAP_KEY': JSON.stringify(''),
+      'import.meta.env.VITE_WMS_ENABLED': JSON.stringify('false'),
     },
   })
   await vite.listen()

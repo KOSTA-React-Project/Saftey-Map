@@ -175,3 +175,17 @@ function CompareSetupPage() {
 
 - `src/App.jsx` (라우트 한 줄 추가는 예외), `src/constants/routes.js`
 - `src/layouts/`, `src/components/layout/`, `src/components/ui/`, `src/styles/`
+
+## 공인 IP 공개 배포
+
+- 공개 주소: http://43.203.255.132 (현재 HTTP, HTTPS는 도메인 연결 후 추가)
+- Nginx web 컨테이너가 React 화면을 제공하고 /api 요청을 내부 Express API로 전달한다.
+- WMS 키는 서버 SAFEMAP_KEY에 설정한다. 프론트의 기존 VITE_SAFEMAP_KEY는 더 이상 사용하지 않는다. 로컬 WMS 사용 시에도 연결된 API 서버에 SAFEMAP_KEY가 필요하다.
+- 카카오 JavaScript 키는 브라우저용이며 공개 IP 주소를 Kakao SDK 허용 도메인에 등록한다.
+- 배포 구성과 실행 명령: [deploy/README.md](deploy/README.md). GitHub Actions는 현재 CI만 구성되어 있으며 공개 배포는 수동 수행했다.
+
+## CI/CD
+
+작업 브랜치와 PR에서는 검사만 수행하고, main 반영 후 검증한 프론트·API 파일을 EC2로 자동 배포한다.
+설정 변수, 배포 순서, 백업·복구 및 제한은 [배포 안내](deploy/README.md)를 참고한다.
+배포 스크립트 테스트: `node --test deploy/tests/*.test.mjs`.
