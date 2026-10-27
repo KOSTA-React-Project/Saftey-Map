@@ -38,8 +38,13 @@
   border-radius: var(--radius-sm);
 }
 
-.compareButton:hover {
+.compareButton:hover:not(:disabled) {
   background: var(--color-primary-soft);
+}
+
+.compareButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .compareButton:focus-visible {

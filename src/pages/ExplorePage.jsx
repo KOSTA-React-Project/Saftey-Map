@@ -27,7 +27,8 @@ function ExplorePage() {
   const noteSpots = useNoteSpots(notes)
   const [place, setPlace] = useState(null)
   const { crimeType, setCrimeType } = useCrimeType()
-  const [pointA, setPointA] = useState({ lat: 37.5665, lng: 126.978 })
+  // 처음엔 중심 없음. 지도 클릭·검색으로 정해짐
+  const [pointA, setPointA] = useState(null)
   const [radius, setRadius] = useState(500)
   const navigate = useNavigate()
 
@@ -46,6 +47,13 @@ function ExplorePage() {
     setPointA(point)
     pickFromMap(point)
   })
+
+  // A를 다시 누르면 중심·검색 칸·고른 장소 표시를 모두 비움
+  const clearPointA = () => {
+    setPlace(null)
+    setPointA(null)
+    searchBoxProps.onValueChange('')
+  }
 
   // 검색한 위치로 지도 이동
   useMapCenter(place)
@@ -94,6 +102,7 @@ function ExplorePage() {
             <button
               type="button"
               className={styles.compareButton}
+              disabled={!pointA}
               onClick={goCompare}
             >
               이 위치로 비교하기
@@ -145,13 +154,19 @@ function ExplorePage() {
               ))}
             </fieldset>
             <p className={styles.description}>
-              지도를 누르면 그 지점을 중심으로 반경을 보여줘요.
+              지도를 누르면 그 지점을 중심으로 반경을 보여줘요. A를 다시 누르면
+              지워져요.
             </p>
           </>
         )}
       </Sidebar>
       <NoteSpotMarkers spots={noteSpots.spots} onSelect={noteSpots.openSpot} />
-      <MapMarker type="A" position={pointA} />
+      <MapMarker
+        type="A"
+        position={pointA}
+        label="선택한 중심 지우기"
+        onClick={clearPointA}
+      />
       <MapRadius center={pointA} radius={radius} />
     </>
   )
