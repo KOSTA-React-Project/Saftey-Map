@@ -26,6 +26,32 @@
   color: var(--color-secondary);
 }
 
+.compareButton {
+  width: 100%;
+  min-height: var(--touch-target);
+  margin-top: var(--space-12);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+  background: var(--color-white);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+}
+
+.compareButton:hover:not(:disabled) {
+  background: var(--color-primary-soft);
+}
+
+.compareButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.compareButton:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: var(--space-4);
+}
+
 .sectionHeader {
   display: flex;
   align-items: baseline;

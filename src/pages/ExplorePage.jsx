@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router'
 import Sidebar from '../components/layout/Sidebar.jsx'
 import MapMarker from '../components/map/MapMarker.jsx'
 import MapRadius from '../components/map/MapRadius.jsx'
@@ -7,6 +8,7 @@ import { useMapCenter, useMapClick } from '../hooks/useMap.js'
 import { useLocationPicker } from '../hooks/useLocationPicker.js'
 import { useCrimeType } from '../hooks/useCrimeType.js'
 import { CRIME_TYPES, DEFAULT_CRIME_TYPE } from '../constants/crimeTypes.js'
+import { ROUTES } from '../constants/routes.js'
 import { useApprovedNotes } from '../hooks/useApprovedNotes.js'
 import { useNoteSpots } from '../hooks/useNoteSpots.js'
 import NoteSpotMarkers from '../components/notes/NoteSpotMarkers.jsx'
@@ -25,11 +27,13 @@ function ExplorePage() {
   const noteSpots = useNoteSpots(notes)
   const [place, setPlace] = useState(null)
   const { crimeType, setCrimeType } = useCrimeType()
-  const [pointA, setPointA] = useState({ lat: 37.5665, lng: 126.978 })
+  // 처음엔 중심 없음. 지도 클릭·검색으로 정해짐
+  const [pointA, setPointA] = useState(null)
   const [radius, setRadius] = useState(500)
+  const navigate = useNavigate()
 
   // 검색한 곳으로 지도를 옮기고 중심도 그곳으로
-  const { pickFromMap, searchBoxProps } = useLocationPicker({
+  const { location, pickFromMap, searchBoxProps } = useLocationPicker({
     onSearchSelect: (result) => {
       setPlace(result)
       setPointA({ lat: result.lat, lng: result.lng })
@@ -44,8 +48,21 @@ function ExplorePage() {
     pickFromMap(point)
   })
 
+  // A를 다시 누르면 중심·검색 칸·고른 장소 표시를 모두 비움
+  const clearPointA = () => {
+    setPlace(null)
+    setPointA(null)
+    searchBoxProps.onValueChange('')
+  }
+
   // 검색한 위치로 지도 이동
   useMapCenter(place)
+
+  // 지금 중심(A)과 반경을 들고 두 지역 비교로 이동. 주소가 아직 없으면 비교 화면에서 다시 조회
+  const goCompare = () =>
+    navigate(ROUTES.COMPARE, {
+      state: { A: { ...pointA, address: location?.address }, radius },
+    })
 
   // 필터는 이 화면에서만 쓰므로, 다른 탭으로 가면 전체로 되돌림
   useEffect(() => () => setCrimeType(DEFAULT_CRIME_TYPE), [setCrimeType])
@@ -82,6 +99,14 @@ function ExplorePage() {
                 {place.address !== place.label && <span>{place.address}</span>}
               </p>
             )}
+            <button
+              type="button"
+              className={styles.compareButton}
+              disabled={!pointA}
+              onClick={goCompare}
+            >
+              이 위치로 비교하기
+            </button>
 
             <div className={styles.sectionHeader}>
               <h3 className={styles.sectionTitle}>범죄 유형</h3>
@@ -129,13 +154,19 @@ function ExplorePage() {
               ))}
             </fieldset>
             <p className={styles.description}>
-              지도를 누르면 그 지점을 중심으로 반경을 보여줘요.
+              지도를 누르면 그 지점을 중심으로 반경을 보여줘요. A를 다시 누르면
+              지워져요.
             </p>
           </>
         )}
       </Sidebar>
       <NoteSpotMarkers spots={noteSpots.spots} onSelect={noteSpots.openSpot} />
-      <MapMarker type="A" position={pointA} />
+      <MapMarker
+        type="A"
+        position={pointA}
+        label="선택한 중심 지우기"
+        onClick={clearPointA}
+      />
       <MapRadius center={pointA} radius={radius} />
     </>
   )
