@@ -1,10 +1,32 @@
-import { createContext, useContext, useEffect, useRef } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useSyncExternalStore,
+} from 'react'
 
 // 카카오 지도 객체를 하위 컴포넌트에 전달. 불러오는 중이면 null
 export const MapContext = createContext(null)
 
 export function useMap() {
   return useContext(MapContext)
+}
+
+// 지도 확대 단계를 구독. 지도가 없으면 null (숫자가 클수록 넓게 보임)
+export function useMapLevel() {
+  const map = useMap()
+  const subscribe = useCallback(
+    (onChange) => {
+      if (!map) return () => {}
+      const { event } = window.kakao.maps
+      event.addListener(map, 'zoom_changed', onChange)
+      return () => event.removeListener(map, 'zoom_changed', onChange)
+    },
+    [map],
+  )
+  return useSyncExternalStore(subscribe, () => map?.getLevel() ?? null)
 }
 
 // 지도를 누르면 handler({ lat, lng }) 호출
