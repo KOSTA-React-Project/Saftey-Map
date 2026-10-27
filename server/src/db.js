@@ -28,6 +28,16 @@ const pool = mysql.createPool({
   connectTimeout: 10000,
   supportBigNumbers: true,
   bigNumberStrings: true,
+  // 안심노트 위도·경도(DECIMAL)를 숫자로, 날짜는 UTC 기준으로 읽는다
+  decimalNumbers: true,
+  timezone: 'Z',
+})
+
+// DATETIME 생성과 mysql2의 UTC 해석 기준을 맞춘다. 새 연결마다 적용한다.
+pool.on('connection', (connection) => {
+  connection.query("SET time_zone = '+00:00'", (error) => {
+    if (error) connection.destroy()
+  })
 })
 
 export default pool

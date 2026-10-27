@@ -117,6 +117,15 @@ async function withPage(run) {
   const page = await browser.newPage()
   const errors = []
   page.on('pageerror', (error) => errors.push(error.message))
+  // 위치 선택 테스트에서는 HTTP 경계만 대체한다. localStorage는 테스트 관찰용이다.
+  await page.route('**/api/notes', async (route) => {
+    if (route.request().method() === 'POST') {
+      const note = route.request().postDataJSON()
+      await page.evaluate((value) => localStorage.setItem('safety-map:notes', JSON.stringify([{ ...value, status: 'PENDING' }])), note)
+      return route.fulfill({ status: 201, json: { id: 1, status: 'PENDING' } })
+    }
+    return route.fulfill({ json: [] })
+  })
   await page.route('https://dapi.kakao.com/**', (route) =>
     route.fulfill({
       contentType: 'application/javascript',
