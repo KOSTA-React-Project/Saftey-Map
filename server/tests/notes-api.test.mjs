@@ -2,7 +2,13 @@ import assert from 'node:assert/strict'
 import { once } from 'node:events'
 import { test } from 'node:test'
 import { createApp } from '../src/app.js'
-import { memoryRepository, validInput } from './support/notesFixture.mjs'
+import { createMysqlNotes } from '../src/notes/mysqlRepository.js'
+import {
+  memoryRepository,
+  validInput,
+  TEST_USER_ID,
+  TEST_ADMIN_ID,
+} from './support/notesFixture.mjs'
 
 // 회원 ID는 UUID (노션 DB ERD)
 const USER_ID = '00000000-0000-4000-8000-000000000007'
@@ -48,7 +54,7 @@ test('좌표와 내용을 저장하고 승인 후에만 공개 목록·상세에
     status: 'APPROVED',
   })
   assert.equal(created.status, 201)
-  assert.deepEqual(created.body, { id: 1, status: 'PENDING' })
+  assert.deepEqual(created.body, { id: '1', status: 'PENDING' })
   assert.equal(f.repository.notes[0].authorId, USER_ID)
   assert.equal(f.repository.notes[0].latitude, 37.5665)
   assert.equal(f.repository.notes[0].longitude, 126.978)
@@ -56,7 +62,7 @@ test('좌표와 내용을 저장하고 승인 후에만 공개 목록·상세에
   assert.deepEqual((await f.request('/api/notes')).body, [])
   assert.equal((await f.request('/api/notes/1')).status, 404)
   f.setUser({ id: ADMIN_ID, role: 'ADMIN' })
-  assert.equal((await f.request('/api/admin/notes')).body.length, 1)
+  assert.equal((await f.request('/api/admin/notes')).body.items.length, 1)
   const approved = await f.request('/api/admin/notes/1/status', 'PATCH', {
     status: 'APPROVED',
     expectedStatus: 'PENDING',
@@ -66,7 +72,7 @@ test('좌표와 내용을 저장하고 승인 후에만 공개 목록·상세에
   f.setUser(null)
   assert.deepEqual((await f.request('/api/notes')).body, [
     {
-      id: 1,
+      id: '1',
       title: '보행로 관찰',
       tag: '조명 고장',
       latitude: 37.5665,
@@ -101,7 +107,7 @@ test('반려·숨김 글은 공개되지 않고 승인 복구는 즉시 반영�
   assert.equal((await f.request('/api/notes/2')).status, 404)
   assert.equal((await patch(2, 'APPROVED', '', 'HIDDEN')).status, 200)
   assert.equal((await f.request('/api/notes')).body.length, 1)
-  const admin = (await f.request('/api/admin/notes?status=REJECTED')).body
+  const admin = (await f.request('/api/admin/notes?status=REJECTED')).body.items
   assert.equal(admin[0].moderationReason, '위치 확인 필요')
 })
 
@@ -198,4 +204,168 @@ test('저장 실패 시 성공 응답이나 DB 오류 내용이 노출되지 않
   const response = await f.request('/api/notes', 'POST', validInput)
   assert.equal(response.status, 500)
   assert.equal(JSON.stringify(response.body).includes('private'), false)
+})
+
+test('관리자 목록은 서버에서 검색·상태·태그·페이지를 적용하고 전체 상태 개수를 구분한다', async (t) => {
+  const f = await fixture(t, { id: TEST_ADMIN_ID, role: 'ADMIN' })
+  for (let i = 0; i < 23; i++) {
+    await f.repository.create({
+      ...validInput,
+      authorId: TEST_USER_ID,
+      title: `메모 ${i}`,
+      tag: i % 2 ? '조명 고장' : '공사 구간',
+    })
+  }
+  f.repository.notes[0].status = 'APPROVED'
+  const first = (await f.request('/api/admin/notes')).body
+  assert.equal(first.items.length, 10)
+  assert.equal(first.total, 22)
+  assert.equal(first.totalPages, 3)
+  assert.deepEqual(first.counts, {
+    PENDING: 22,
+    APPROVED: 1,
+    REJECTED: 0,
+    HIDDEN: 0,
+  })
+  const second = (await f.request('/api/admin/notes?page=2')).body
+  assert.equal(second.page, 2)
+  assert.equal(second.items.length, 10)
+  assert.equal(
+    first.items.some((a) => second.items.some((b) => a.id === b.id)),
+    false,
+  )
+  const last = (await f.request('/api/admin/notes?page=999')).body
+  assert.equal(last.page, 3)
+  assert.equal(last.items.length, 2)
+  const params = new URLSearchParams({
+    status: '',
+    query: '메모 1',
+    tag: '조명 고장',
+    pageSize: '2',
+  })
+  const filtered = (await f.request(`/api/admin/notes?${params}`)).body
+  assert.equal(filtered.total, 6)
+  assert.equal(filtered.items.length, 2)
+  assert.ok(
+    filtered.items.every(
+      (n) => n.tag === '조명 고장' && n.title.includes('메모 1'),
+    ),
+  )
+  assert.equal(
+    (await f.request('/api/admin/notes?query=NOT_FOUND')).body.total,
+    0,
+  )
+})
+
+test('관리자 목록의 과도한 조회 개수·검색어·중복 파라미터를 DB 조회 전에 거절한다', async (t) => {
+  const f = await fixture(t, { id: TEST_ADMIN_ID, role: 'ADMIN' })
+  f.repository.listForAdmin = () => {
+    throw new Error('이 입력으로는 DB를 호출하면 안 됩니다.')
+  }
+  for (const query of [
+    'page=0',
+    'page=-1',
+    'page=1.5',
+    'page=100001',
+    'pageSize=0',
+    'pageSize=51',
+    'page=1&page=2',
+    'status=PENDING&status=APPROVED',
+    'query=a&query=b',
+    `query=${'x'.repeat(81)}`,
+    `tag=${'x'.repeat(21)}`,
+  ]) {
+    assert.equal(
+      (await f.request(`/api/admin/notes?${query}`)).status,
+      400,
+      query,
+    )
+  }
+})
+
+test('회원 UUID와 BIGINT 메모 번호를 유지하고 마지막 처리 사유만 덮어쓴다', async (t) => {
+  const f = await fixture(t, { id: TEST_ADMIN_ID, role: 'ADMIN' })
+  await f.repository.create({ ...validInput, authorId: TEST_USER_ID })
+  f.repository.notes[0].id = '18446744073709551615'
+  const path = '/api/admin/notes/18446744073709551615/status'
+  assert.equal(
+    (
+      await f.request(path, 'PATCH', {
+        status: 'APPROVED',
+        expectedStatus: 'PENDING',
+      })
+    ).status,
+    200,
+  )
+  assert.equal(f.repository.notes[0].moderationReason, '')
+  assert.equal(
+    (
+      await f.request(path, 'PATCH', {
+        status: 'HIDDEN',
+        reason: '위치 재확인',
+        expectedStatus: 'APPROVED',
+      })
+    ).status,
+    200,
+  )
+  assert.equal(f.repository.notes[0].moderationReason, '위치 재확인')
+  assert.equal(
+    (
+      await f.request(path, 'PATCH', {
+        status: 'APPROVED',
+        reason: '확인 완료',
+        expectedStatus: 'HIDDEN',
+      })
+    ).status,
+    200,
+  )
+  assert.equal(f.repository.notes[0].moderationReason, '확인 완료')
+  const detail = (await f.request('/api/notes/18446744073709551615')).body
+  assert.equal(detail.id, '18446744073709551615')
+  assert.equal(detail.moderationReason, undefined)
+  assert.equal((await f.request('/api/notes/18446744073709551616')).status, 400)
+  f.setUser({ id: 7, role: 'ADMIN' })
+  assert.equal((await f.request('/api/admin/notes')).status, 401)
+})
+
+test('MySQL 목록 SQL은 검색값을 바인딩하고 LIMIT/OFFSET으로 조회량을 제한한다', async () => {
+  const calls = []
+  const pool = {
+    async execute(sql, values = []) {
+      calls.push({ sql, values })
+      if (sql.includes('GROUP BY'))
+        return [[{ status: 'PENDING', count: '25' }]]
+      return [[{ total: '25' }]]
+    },
+    async query(sql, values) {
+      calls.push({ sql, values })
+      return [[]]
+    },
+  }
+  const keyword = "%' OR 1=1 --"
+  const result = await createMysqlNotes(pool).listForAdmin({
+    status: 'PENDING',
+    query: keyword,
+    tag: '조명 고장',
+    page: 2,
+    pageSize: 10,
+  })
+  const select = calls.find((call) => call.sql.includes('LIMIT'))
+  assert.match(
+    select.sql,
+    /ORDER BY created_at DESC, id DESC LIMIT \? OFFSET \?/,
+  )
+  assert.equal(select.sql.includes(keyword), false)
+  assert.deepEqual(select.values, [
+    'PENDING',
+    '조명 고장',
+    keyword,
+    keyword,
+    10,
+    10,
+  ])
+  assert.equal(result.total, 25)
+  assert.equal(result.page, 2)
+  assert.equal(result.totalPages, 3)
+  assert.equal(result.counts.PENDING, 25)
 })
