@@ -88,3 +88,10 @@
 .actionButton:hover {
   background: var(--color-surface);
 }
+
+.userName {
+  display: flex;
+  align-items: center;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
