@@ -1,0 +1,126 @@
+name: 프로젝트 자동 검사
+
+on:
+  push:
+    branches:
+      - chore/ci-cd
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  check:
+    name: 테스트 및 빌드
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: 저장소 코드 가져오기
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Node.js 준비
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            server/package-lock.json
+
+      - name: 프론트 패키지 설치
+        run: npm ci
+
+      - name: 서버 패키지 설치
+        run: npm ci --prefix server
+
+      - name: 코드 검사
+        run: npm run lint
+
+      - name: API 테스트
+        run: npm run test:api
+
+      - name: 배포 스크립트 검사
+        run: |
+          bash -n deploy/package-release.sh
+          bash -n deploy/ec2-deploy.sh
+          node --test deploy/tests/*.test.mjs
+
+      - name: 프론트 빌드
+        env:
+          VITE_KAKAO_MAP_KEY: ${{ vars.VITE_KAKAO_MAP_KEY }}
+        run: npm run build
+
+      - name: 검증한 배포 파일 묶기
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          KAKAO_KEY: ${{ vars.VITE_KAKAO_MAP_KEY }}
+        run: |
+          test -n "$KAKAO_KEY" || { echo 'VITE_KAKAO_MAP_KEY variable is required'; exit 1; }
+          bash deploy/package-release.sh "$GITHUB_SHA-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" "$RUNNER_TEMP/release.tar.gz"
+          cp deploy/ec2-deploy.sh "$RUNNER_TEMP/ec2-deploy.sh"
+
+      - name: 배포 파일 보관
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/release.tar.gz
+            ${{ runner.temp }}/ec2-deploy.sh
+          retention-days: 7
+          overwrite: true
+
+  deploy:
+    name: EC2 배포
+    needs: check
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    concurrency:
+      group: ansim-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-${{ github.sha }}
+          path: release
+
+      - name: SSH로 전달하고 배포
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+          EC2_KNOWN_HOSTS: ${{ vars.EC2_KNOWN_HOSTS }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$EC2_HOST" =~ ^[a-zA-Z0-9.-]+$ ]]
+          [[ "$EC2_USER" =~ ^[a-z_][a-z0-9_-]*$ ]]
+          test -n "$EC2_SSH_KEY"
+          test -n "$EC2_KNOWN_HOSTS"
+          mkdir -p "$RUNNER_TEMP/ansim-ssh"
+          chmod 700 "$RUNNER_TEMP/ansim-ssh"
+          trap 'rm -rf "$RUNNER_TEMP/ansim-ssh"' EXIT
+          printf '%s\n' "$EC2_SSH_KEY" | tr -d '\r' > "$RUNNER_TEMP/ansim-ssh/key"
+          printf '%s\n' "$EC2_KNOWN_HOSTS" > "$RUNNER_TEMP/ansim-ssh/known_hosts"
+          chmod 600 "$RUNNER_TEMP/ansim-ssh/"*
+          options=(-i "$RUNNER_TEMP/ansim-ssh/key" -o BatchMode=yes -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$RUNNER_TEMP/ansim-ssh/known_hosts" -o ConnectTimeout=15 -o ServerAliveInterval=30)
+          target="$EC2_USER@$EC2_HOST"
+          release_id="$GITHUB_SHA-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          remote="/home/ubuntu/ansim-infra/incoming/$release_id"
+          ssh "${options[@]}" "$target" "mkdir -p '$remote'"
+          scp "${options[@]}" release/release.tar.gz release/ec2-deploy.sh "$target:$remote/"
+          ssh "${options[@]}" "$target" "timeout --kill-after=180s 25m bash '$remote/ec2-deploy.sh' '$release_id'"
