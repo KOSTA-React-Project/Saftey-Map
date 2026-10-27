@@ -16,12 +16,12 @@ function LoginPage() {
   const [submitting, setSubmitting] = useState(false)
 
   if (session.status === 'authenticated') {
-    // 방금 로그인한 관리자는 돌아갈 화면이 없으면 관리자 화면으로
-    const home =
+    // 방금 로그인한 관리자는 항상 관리자 화면으로
+    const target =
       submitting && session.user.role === 'ADMIN'
         ? ROUTES.ADMIN
-        : ROUTES.EXPLORE
-    return <Navigate to={location.state?.from ?? home} replace />
+        : (location.state?.from ?? ROUTES.EXPLORE)
+    return <Navigate to={target} replace />
   }
 
   const handleChange = (e) => {
