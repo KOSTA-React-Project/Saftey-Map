@@ -20,7 +20,9 @@ const PAGE_SIZE = 10
 
 function AdminPage({ session = null }) {
   const access = getAdminAccess(session)
-  const demoAvailable = import.meta.env.DEV && access === 'unconfigured'
+  const demoAvailable =
+    (import.meta.env.DEV || import.meta.env.VITE_NOTES_DEMO_MODE === 'true') &&
+    access === 'unconfigured'
   const canReview = access === 'allowed' || demoAvailable
   const [view, setView] = useState('notes')
   const [data, setData] = useState({ status: 'loading', notes: [], error: '' })
@@ -155,13 +157,14 @@ function AdminPage({ session = null }) {
             </h1>
             <p>이웃의 관찰 기록이 공개되기 전, 내용을 확인해 주세요.</p>
           </div>
-          <span className={styles.badge}>관리자 데모</span>
+          <span className={styles.badge}>안심노트 관리</span>
         </div>
         <p className={styles.notice}>
-          실제 로그인·관리자 권한 검증은 미연결입니다. 이 화면은 브라우저
-          localStorage를 사용하는 시연이며 서버·MySQL에 저장되지 않습니다. 같은
-          브라우저·주소에서는 새로고침 후에도 남습니다. /bimil 주소 자체는 접근
-          보안이 아닙니다.
+          {demoAvailable
+            ? import.meta.env.VITE_NOTES_DEMO_MODE === 'true'
+              ? '샘플 DB 검증용 화면입니다. 가상 테스트 사용자로 작성·승인을 확인하며, 실제 회원 로그인과는 별개입니다.'
+              : '로그인 연결 전 개발 화면입니다. 목록 조회와 처리는 서버 API를 사용하며 서버에서도 관리자 권한을 확인합니다.'
+            : '목록 조회와 처리는 서버에서 관리자 권한을 확인합니다.'}
         </p>
         {(access !== 'unconfigured' && access !== 'allowed') ||
         (access === 'unconfigured' && !demoAvailable) ? (
@@ -306,7 +309,7 @@ function AdminPage({ session = null }) {
                 {!items.length ? (
                   <div className={styles.empty}>
                     {view === 'history'
-                      ? '아직 처리 이력이 없습니다.'
+                      ? '현재 DB 구조는 최근 상태와 처리 사유만 저장합니다. 각 메모의 상세에서 확인해 주세요.'
                       : data.notes.length
                         ? '검색 조건에 맞는 메모가 없습니다.'
                         : '제출된 메모가 없습니다. 사용자 화면에서 메모를 작성하거나 아래 예시를 추가해 주세요.'}

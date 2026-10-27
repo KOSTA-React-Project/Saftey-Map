@@ -1,6 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router'
-import { ROUTES } from '../constants/routes.js'
 import Sidebar from '../components/layout/Sidebar.jsx'
 import MapMarker from '../components/map/MapMarker.jsx'
 import MapRadius from '../components/map/MapRadius.jsx'
@@ -9,7 +7,10 @@ import { useMapCenter, useMapClick } from '../hooks/useMap.js'
 import { useLocationPicker } from '../hooks/useLocationPicker.js'
 import { useCrimeType } from '../hooks/useCrimeType.js'
 import { CRIME_TYPES, DEFAULT_CRIME_TYPE } from '../constants/crimeTypes.js'
-import { getApprovedNotes } from '../api/notesApi.js'
+import { useApprovedNotes } from '../hooks/useApprovedNotes.js'
+import { useNoteSpots } from '../hooks/useNoteSpots.js'
+import NoteSpotMarkers from '../components/notes/NoteSpotMarkers.jsx'
+import NoteSpotPanel from '../components/notes/NoteSpotPanel.jsx'
 import styles from './ExplorePage.module.css'
 
 const RADIUS_OPTIONS = [
@@ -19,8 +20,9 @@ const RADIUS_OPTIONS = [
 
 // 01 지도 탐색 — 주소·장소 검색, 범죄 유형 필터, 승인된 안심노트, 중심·반경 표시
 function ExplorePage() {
-  const navigate = useNavigate()
-  const [notes, setNotes] = useState([])
+  const { notes, error: notesError } = useApprovedNotes()
+  // 마커를 누르면 탭 이동 없이 사이드바에서 그 위치의 노트 목록·상세를 보여줌
+  const noteSpots = useNoteSpots(notes)
   const [place, setPlace] = useState(null)
   const { crimeType, setCrimeType } = useCrimeType()
   const [pointA, setPointA] = useState({ lat: 37.5665, lng: 126.978 })
@@ -48,85 +50,91 @@ function ExplorePage() {
   // 필터는 이 화면에서만 쓰므로, 다른 탭으로 가면 전체로 되돌림
   useEffect(() => () => setCrimeType(DEFAULT_CRIME_TYPE), [setCrimeType])
 
-  useEffect(() => {
-    getApprovedNotes()
-      .then(setNotes)
-      .catch(() => setNotes([]))
-  }, [])
-
   return (
     <>
       <Sidebar>
-        <h2 className={styles.title}>이사할 동네, 같은 기준으로 살펴봐요</h2>
-        <p className={styles.label}>주소·장소 검색</p>
-        {/* 검색어를 고치면 이전에 고른 장소 표시도 해제 */}
-        <PlaceSearchBox
-          {...searchBoxProps}
-          onValueChange={(next) => {
-            setPlace(null)
-            searchBoxProps.onValueChange(next)
-          }}
-        />
-        {place && (
-          <p className={styles.selected}>
-            <strong>{place.label}</strong>
-            {place.address !== place.label && <span>{place.address}</span>}
-          </p>
+        {noteSpots.isOpen ? (
+          <NoteSpotPanel
+            spot={noteSpots.spot}
+            noteId={noteSpots.noteId}
+            onOpenNote={noteSpots.openNote}
+            onBack={noteSpots.backToList}
+            onClose={noteSpots.close}
+          />
+        ) : (
+          <>
+            {notesError && <p role="status">{notesError}</p>}
+            <h2 className={styles.title}>
+              이사할 동네, 같은 기준으로 살펴봐요
+            </h2>
+            <p className={styles.label}>주소·장소 검색</p>
+            {/* 검색어를 고치면 이전에 고른 장소 표시도 해제 */}
+            <PlaceSearchBox
+              {...searchBoxProps}
+              onValueChange={(next) => {
+                setPlace(null)
+                searchBoxProps.onValueChange(next)
+              }}
+            />
+            {place && (
+              <p className={styles.selected}>
+                <strong>{place.label}</strong>
+                {place.address !== place.label && <span>{place.address}</span>}
+              </p>
+            )}
+
+            <div className={styles.sectionHeader}>
+              <h3 className={styles.sectionTitle}>범죄 유형</h3>
+              <span className={styles.sectionNote}>공공데이터</span>
+            </div>
+            {/* 버튼 기본 동작(Tab 이동, Enter·Space 선택)에 맞춰 토글 버튼으로 표시 */}
+            <div
+              className={styles.typeGrid}
+              role="group"
+              aria-label="범죄 유형"
+            >
+              {CRIME_TYPES.map(({ id, label }) => (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={crimeType === id}
+                  className={`${styles.typeButton} ${crimeType === id ? styles.typeSelected : ''}`}
+                  onClick={() => setCrimeType(id)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <fieldset className={styles.radius}>
+              <legend className={styles.sectionTitle}>반지름 선택</legend>
+              {RADIUS_OPTIONS.map((option) => (
+                <label
+                  key={option.value}
+                  className={
+                    radius === option.value
+                      ? styles.radiusSelected
+                      : styles.radiusOption
+                  }
+                >
+                  <input
+                    type="radio"
+                    name="radius"
+                    value={option.value}
+                    checked={radius === option.value}
+                    onChange={() => setRadius(option.value)}
+                  />
+                  {option.label}
+                </label>
+              ))}
+            </fieldset>
+            <p className={styles.description}>
+              지도를 누르면 그 지점을 중심으로 반경을 보여줘요.
+            </p>
+          </>
         )}
-
-        <div className={styles.sectionHeader}>
-          <h3 className={styles.sectionTitle}>범죄 유형</h3>
-          <span className={styles.sectionNote}>공공데이터</span>
-        </div>
-        {/* 버튼 기본 동작(Tab 이동, Enter·Space 선택)에 맞춰 토글 버튼으로 표시 */}
-        <div className={styles.typeGrid} role="group" aria-label="범죄 유형">
-          {CRIME_TYPES.map(({ id, label }) => (
-            <button
-              key={id}
-              type="button"
-              aria-pressed={crimeType === id}
-              className={`${styles.typeButton} ${crimeType === id ? styles.typeSelected : ''}`}
-              onClick={() => setCrimeType(id)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        <fieldset className={styles.radius}>
-          <legend className={styles.sectionTitle}>반지름 선택</legend>
-          {RADIUS_OPTIONS.map((option) => (
-            <label
-              key={option.value}
-              className={
-                radius === option.value
-                  ? styles.radiusSelected
-                  : styles.radiusOption
-              }
-            >
-              <input
-                type="radio"
-                name="radius"
-                value={option.value}
-                checked={radius === option.value}
-                onChange={() => setRadius(option.value)}
-              />
-              {option.label}
-            </label>
-          ))}
-        </fieldset>
-        <p className={styles.description}>
-          지도를 누르면 그 지점을 중심으로 반경을 보여줘요.
-        </p>
       </Sidebar>
-      {notes.map((note) => (
-        <MapMarker
-          key={note.id}
-          type="note"
-          position={{ lat: note.latitude, lng: note.longitude }}
-          onClick={() => navigate(`${ROUTES.NOTES}/${note.id}`)}
-        />
-      ))}
+      <NoteSpotMarkers spots={noteSpots.spots} onSelect={noteSpots.openSpot} />
       <MapMarker type="A" position={pointA} />
       <MapRadius center={pointA} radius={radius} />
     </>
