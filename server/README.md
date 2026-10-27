@@ -69,7 +69,7 @@ role은 요청마다 DB에서 읽으므로, 회원을 `ADMIN`으로 바꾸면 �
 | `POST /api/notes` | 회원 | 내용·좌표를 `PENDING`으로 저장, `{id, status}` 반환 |
 | `GET /api/notes` | 공개 | `APPROVED` 마커 목록 |
 | `GET /api/notes/:id` | 공개 | 승인된 노트의 제목·내용·날짜·위치 |
-| `GET /api/admin/notes?status=PENDING` | 관리자 | 해당 상태 목록. `status=`는 전체 |
+| `GET /api/admin/notes?status=PENDING&page=1&pageSize=10` | 관리자 | 서버 검색·필터·페이지 목록과 전체 상태별 개수 |
 | `PATCH /api/admin/notes/:id/status` | 관리자 | `{status, reason, expectedStatus}`로 처리 |
 
 작성 입력은 `{title, content, tag, observedDate, locationName, latitude, longitude, agreed: true}`이다.
@@ -100,3 +100,39 @@ npm run test:e2e
 ```
 
 참고 API 문서: [Express](https://expressjs.com/en/5x/api/), [mysql2](https://sidorares.github.io/node-mysql2/docs).
+
+
+## 관리자 목록 응답과 화면
+
+- 관리자 목록은 배열 대신 `{ items, total, page, pageSize, totalPages, counts }`를 반환한다.
+- `status`: 기본 PENDING, 빈 문자열은 전체. `query`: 제목·본문 부분 검색, 최대 80자. `tag`: 최대 20자, SQL 동등 비교.
+- `page`: 1~100000, `pageSize`: 1~50(기본 10). 마지막 페이지를 넘으면 현재 마지막 페이지로 보정한다.
+- `total`과 페이지는 현재 검색 조건 기준, `counts`는 검색 조건과 무관한 전체 상태별 개수다.
+- 정렬은 created_at DESC, id DESC이며 SQL 값과 LIMIT/OFFSET은 바인딩한다.
+- 프론트는 250ms 입력 지연·AbortController·응답 무효화로 이전 검색 결과가 새 조건을 덮어쓰지 못하게 한다.
+- 예시 메모 생성·처리 이력 탭은 없다. 상세에는 마지막 상태·처리 사유만 표시한다.
+- 화면 진입은 권한 부여가 아니다. 인증 미연결 요청은 서버 401, 일반 회원은 403이다. 서버 오류 시 데모 데이터로 대체하지 않는다.
+- AuthProvider에서 AdminPage로 세션 연결, 실제 세션 인증, 운영 CSRF 정책, EC2 MySQL 승인 검증은 이번 단계에서 수행하지 않았다.
+
+## 관리자 작업 검증 명령
+
+프로젝트 루트에서:
+
+```bash
+npm run test:api
+npm run lint
+npm run build
+```
+
+브라우저 검증은 DB를 메모리 저장소로, 인증과 Kakao SDK를 테스트 fixture로 대체한다. 실제 DB/실제 로그인 검증이 아니다.
+
+```bash
+# Playwright Chromium을 설치한 경우
+node --test server/tests/map-notes.test.mjs
+
+# 설치된 Google Chrome을 사용하는 경우
+PLAYWRIGHT_CHANNEL=chrome node --test server/tests/map-notes.test.mjs
+```
+
+검증 범위: 관리자 페이지·검색·태그·조회 상한·큰 메모 ID·마지막 사유·401/403/연결 실패·느린 검색 응답·390px 화면.
+SQL 바인딩 테스트는 DB 경계를 대체하며, 실제 MySQL SQL 실행은 별도 확인이 필요하다.

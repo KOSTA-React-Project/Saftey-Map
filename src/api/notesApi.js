@@ -64,8 +64,13 @@ export function getApprovedNote(id) {
   return request(`/notes/${encodeURIComponent(id)}`)
 }
 
-export function getNotesForAdmin(status = 'PENDING') {
-  return request(`/admin/notes?status=${encodeURIComponent(status ?? '')}`)
+// 관리자 목록은 서버에서 필터·페이지를 적용한 응답 객체를 받는다.
+export function getNotesForAdmin(
+  { status = 'PENDING', query = '', tag = '', page = 1, pageSize = 10 } = {},
+  { signal } = {},
+) {
+  const params = new URLSearchParams({ status, query, tag, page, pageSize })
+  return request(`/admin/notes?${params}`, { signal })
 }
 
 export async function updateNoteStatus(
