@@ -6,12 +6,20 @@ import styles from './MapMarker.module.css'
 const LABELS = { A: 'A', B: 'B', note: '+', new: 'N' }
 
 // type: 'A' | 'B' | 'note'(안심노트) | 'new'(작성 중 위치)
-function MapMarker({ type = 'note', position, onClick, label = '안심노트 보기' }) {
+// count: 같은 자리에 겹친 개수. 2 이상이면 기호 대신 숫자로 표시
+function MapMarker({
+  type = 'note',
+  position,
+  onClick,
+  label = '안심노트 보기',
+  count = 1,
+}) {
   const map = useMap()
   const [element] = useState(() => document.createElement('div'))
   const onClickRef = useRef(onClick)
   const lat = position?.lat
   const lng = position?.lng
+  const clickable = Boolean(onClick)
 
   useEffect(() => {
     onClickRef.current = onClick
@@ -26,9 +34,11 @@ function MapMarker({ type = 'note', position, onClick, label = '안심노트 보
       content: element,
       // 승인 노트가 중심 A/B에 가려지지 않게 하고 작성 중 위치는 가장 위에 둔다.
       zIndex: type === 'new' ? 6 : type === 'note' ? 5 : 4,
+      // 누를 수 있는 마커는 지도 클릭(중심 이동 등)이 함께 일어나지 않게 함
+      clickable,
     })
     return () => overlay.setMap(null)
-  }, [map, element, lat, lng, type])
+  }, [map, element, lat, lng, type, clickable])
 
   // 마커 클릭이 지도 클릭으로 번지지 않게 직접 처리
   useEffect(() => {
@@ -55,7 +65,7 @@ function MapMarker({ type = 'note', position, onClick, label = '안심노트 보
         }
       }}
     >
-      {LABELS[type]}
+      {count > 1 ? count : LABELS[type]}
     </div>,
     element,
   )
