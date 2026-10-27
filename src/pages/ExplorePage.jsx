@@ -59,7 +59,14 @@ function ExplorePage() {
       <Sidebar>
         <h2 className={styles.title}>이사할 동네, 같은 기준으로 살펴봐요</h2>
         <p className={styles.label}>주소·장소 검색</p>
-        <PlaceSearchBox {...searchBoxProps} />
+        {/* 검색어를 고치면 이전에 고른 장소 표시도 해제 */}
+        <PlaceSearchBox
+          {...searchBoxProps}
+          onValueChange={(next) => {
+            setPlace(null)
+            searchBoxProps.onValueChange(next)
+          }}
+        />
         {place && (
           <p className={styles.selected}>
             <strong>{place.label}</strong>
