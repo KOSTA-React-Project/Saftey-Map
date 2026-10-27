@@ -15,7 +15,7 @@ Node.js + Express + MySQL로 동작한다. 서버 뼈대·DB 연결·Docker는 �
 
 1. 로컬 MySQL에서 프로젝트용 빈 DB를 준비한다. 예시 이름은 `ansim_note`(server/.env.example 기준)이며 기존 실습 DB를 재사용할 필요는 없다.
 2. 해당 DB를 선택하고 `server/sql/schema.sql`을 실행한다. 스크립트는 DB 생성·테이블 삭제·회원 데이터 변경을 하지 않는다.
-3. 회원 담당자가 이미 `users`를 생성했다면, `users.id`와 `notes.author_id`의 타입 및 `UNSIGNED`를 먼저 맞추고 `notes` 부분만 적용한다. 현재 SQL의 ID 타입은 `INT UNSIGNED`를 제안한 것이다.
+3. 회원 담당자가 이미 `users`를 생성했다면, `users.id`와 `notes.author_id`의 타입을 먼저 맞추고 `notes` 부분만 적용한다. 회원 ID는 노션 DB ERD대로 회원가입 시 서버가 만드는 UUID(`CHAR(36)`)다.
 4. `server/.env.example`을 `server/.env`로 복사하고 DB 접속 값을 채운다. 서버 접속정보에는 `VITE_` 접두사를 사용하지 않는다.
 5. 프로젝트 루트에서 각각 실행한다.
 
@@ -40,15 +40,15 @@ npm run dev
 기본 설정은 인증이 연결되지 않은 작성·관리자 요청을 거절한다. 프론트의 로그인 화면 안내는 별도 작업이다.
 
 로컬에서 승인 흐름을 확인하려면 **이 프로젝트 개발 DB에만** 테스트 사용자를 준비한 뒤,
-`server/.env`에 `NODE_ENV=development`, `DEV_AUTH_ENABLED=true`, `DEV_USER_ID=<실제 users.id>`를 설정한다.
+`server/.env`에 `NODE_ENV=development`, `DEV_AUTH_ENABLED=true`, `DEV_USER_ID=<실제 users.id(UUID)>`를 설정한다.
 서버는 해당 ID로 DB에서 role을 조회한다. 관리자 화면 테스트에는 `ADMIN` 역할이 필요하다.
 기존 회원을 관리자로 바꾸거나 테스트 사용자를 자동 생성하지 않는다.
 
 아직 회원 기능이 없을 때 사용할 수 있는 수동 테스트 사용자 예시:
 
 ```sql
-INSERT INTO users (email, nickname, password_hash, role)
-VALUES ('notes-local@example.invalid', '안심노트 로컬 테스트', '!LOGIN_DISABLED_LOCAL_FIXTURE!', 'ADMIN');
+INSERT INTO users (id, email, nickname, password_hash, role)
+VALUES (UUID(), 'notes-local@example.invalid', '안심노트 로컬 테스트', '!LOGIN_DISABLED_LOCAL_FIXTURE!', 'ADMIN');
 SELECT id FROM users WHERE email = 'notes-local@example.invalid';
 ```
 
@@ -57,8 +57,8 @@ SELECT id FROM users WHERE email = 'notes-local@example.invalid';
 
 ## 로그인 담당자 연결 계약
 
-`server/src/index.js`의 `authenticate`를 실제 로그인 담당자의 미들웨어로 교체한다.
-서버에서 검증한 세션 또는 JWT를 통해 `req.user = { id: 정수, role: 'USER' | 'ADMIN' }`를 제공하면 된다.
+`server/src/index.js`의 `authenticate`가 로그인 쿠키(JWT)를 검증해 `req.user = { id: UUID 문자열, role: 'USER' | 'ADMIN' }`를 채운다.
+role은 요청마다 DB에서 읽으므로, 회원을 `ADMIN`으로 바꾸면 다시 로그인하지 않아도 반영된다.
 `server/src/notes/router.js`의 `createNotesRouter`를 기존 Express 서버에 `/api`로 mount할 수도 있다.
 로그인 담당자의 쿠키·CSRF·세션 만료 정책도 함께 맞춘다. 브라우저 역할 값이나 요청 본문의 authorId는 신뢰하지 않는다.
 

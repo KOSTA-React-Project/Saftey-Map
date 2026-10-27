@@ -1,9 +1,10 @@
 -- MySQL 8 기준. 대상 DB를 선택한 뒤 최초 한 번 적용한다.
 -- 회원 담당자가 users를 먼저 만들었다면 users 정의는 함께 맞추고 notes만 적용한다.
--- FK로 연결하는 users.id와 notes.author_id의 타입/UNSIGNED는 반드시 같아야 한다.
+-- FK로 연결하는 users.id와 notes.author_id의 타입은 반드시 같아야 한다.
+-- users.id는 노션 DB ERD대로 회원가입 시 서버가 만드는 UUID(CHAR(36))다.
 -- DB 생성·기존 테이블 삭제·기존 회원 변경은 수행하지 않는다.
 CREATE TABLE IF NOT EXISTS users (
-  id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  id CHAR(36) NOT NULL PRIMARY KEY,
   email VARCHAR(255) NOT NULL UNIQUE,
   nickname VARCHAR(50) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
@@ -14,7 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS notes (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  author_id INT UNSIGNED NOT NULL,
+  author_id CHAR(36) NOT NULL,
   title VARCHAR(60) NOT NULL,
   content VARCHAR(1000) NOT NULL,
   tag VARCHAR(20) NOT NULL,
