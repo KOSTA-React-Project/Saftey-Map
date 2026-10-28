@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Navigate, useNavigate } from 'react-router'
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router'
 import { ROUTES } from '../constants/routes.js'
 import { useAuth } from '../hooks/useAuth.js'
 import MapView from '../components/map/MapView.jsx'
@@ -50,6 +50,16 @@ function NoteComposePage() {
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
 
+  // 로그인하지 않았으면 안내창을 띄우고 로그인 화면으로. 로그인하면 state.from(작성 화면)으로 돌아옴
+  // 개발 모드(StrictMode)에서 effect가 두 번 실행돼도 안내창은 한 번만 뜨게 ref로 막음
+  const notifiedRef = useRef(false)
+  useEffect(() => {
+    if (session.status !== 'unauthenticated' || notifiedRef.current) return
+    notifiedRef.current = true
+    window.alert('안심노트는 로그인 이후 작성하실 수 있습니다.')
+    navigate(ROUTES.LOGIN, { replace: true, state: { from: COMPOSE_PATH } })
+  }, [session.status, navigate])
+
   useEffect(() => {
     getApprovedNotes()
       .then(setApprovedNotes)
@@ -99,12 +109,9 @@ function NoteComposePage() {
     }
   }
 
-  // 로그인 확인 중에는 아무것도 그리지 않음 (작성 화면이 잠깐 보였다 사라지지 않게)
-  if (session.status === 'loading') return null
-  // 로그인하지 않았으면 로그인 화면으로. 로그인하면 state.from(작성 화면)으로 돌아옴
-  if (session.status === 'unauthenticated') {
-    return <Navigate to={ROUTES.LOGIN} replace state={{ from: COMPOSE_PATH }} />
-  }
+  // 로그인 확인 중이거나 로그인하지 않았으면 아무것도 그리지 않음
+  // (작성 화면이 잠깐 보였다 사라지지 않게, 로그인 화면 이동은 위 useEffect에서)
+  if (session.status !== 'authenticated') return null
 
   if (submitted) {
     return (
