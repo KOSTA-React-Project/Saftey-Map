@@ -68,7 +68,7 @@ test('비교 모달은 새 지표·차이·무자료 상태를 표시하고 모�
     `http://127.0.0.1:${vite.httpServer.address().port}/__compare_preview`,
   )
   await page.getByRole('dialog').waitFor()
-  const A = page.getByRole('region', { name: 'A 지역 예시 결과' })
+  const A = page.getByRole('region', { name: 'A 지역 비교 결과' })
   assert.match(await A.innerText(), /28\.9/)
   const types = A.getByRole('region', { name: 'A 범죄 유형별 점수' })
   for (const [label, score] of [
@@ -90,7 +90,7 @@ test('비교 모달은 새 지표·차이·무자료 상태를 표시하고 모�
   assert.equal(await details.getAttribute('open'), null)
   assert.equal(
     await page
-      .getByRole('heading', { name: 'A/B 차이 · 예시', exact: true })
+      .getByRole('heading', { name: 'A/B 차이', exact: true })
       .isVisible(),
     false,
   )
@@ -107,7 +107,7 @@ test('비교 모달은 새 지표·차이·무자료 상태를 표시하고 모�
   assert.match(await diagnostics.innerText(), /37\.7%/)
   assert.equal(
     await details
-      .getByRole('heading', { name: 'A/B 차이 · 예시', exact: true })
+      .getByRole('heading', { name: 'A/B 차이', exact: true })
       .isVisible(),
     true,
   )
@@ -126,7 +126,7 @@ test('비교 모달은 새 지표·차이·무자료 상태를 표시하고 모�
     'true',
   )
   assert.equal(
-    await page.getByRole('region', { name: 'B 지역 예시 결과' }).isVisible(),
+    await page.getByRole('region', { name: 'B 지역 비교 결과' }).isVisible(),
     true,
   )
   await page.getByRole('tab', { name: 'A 지역' }).click()

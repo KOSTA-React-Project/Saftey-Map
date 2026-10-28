@@ -1,8 +1,8 @@
 import { Outlet } from 'react-router'
-import MapView from '../components/map/MapView.jsx'
+import AuthIllustration from '../components/auth/AuthIllustration.jsx'
 import styles from './AuthLayout.module.css'
 
-// 로그인·회원가입 공통 뼈대 — 왼쪽 소개와 지도, 오른쪽 폼(페이지)과 안내
+// 로그인·회원가입 공통 뼈대 — 왼쪽 소개와 그림, 오른쪽 폼(페이지)과 안내
 function AuthLayout() {
   return (
     <div className={styles.authLayout}>
@@ -13,7 +13,7 @@ function AuthLayout() {
           현장의 이야기를 더해요.
         </p>
         <p className={styles.lead}>공공정보와 주민의 관찰을 함께 살펴보세요.</p>
-        <MapView className={styles.map} interactive={false} />
+        <AuthIllustration className={styles.map} />
       </section>
 
       <div className={styles.formArea}>
