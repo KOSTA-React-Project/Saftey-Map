@@ -72,10 +72,6 @@ function CompareResultModal({ result, crimeType, onClose }) {
         <div>
           <p className={styles.eyebrow}>COMPARE / 02 · 예시 결과</p>
           <h2 id="compare-result-title">두 동네를 같은 반경으로 나란히</h2>
-          <p>
-            동일 반경 {result.conditions.radius}m · 동일 지도 축척 ·
-            생활안전지도 WMS 중첩 · 아래 분석 수치는 별도 예시
-          </p>
         </div>
         <button
           type="button"
@@ -139,12 +135,11 @@ function CompareResultModal({ result, crimeType, onClose }) {
                 slot={slot}
                 crimeType={crimeType}
               />
-              <span className={styles.badge}>전체 색상 평균 지수 · 예시</span>
+              <span className={styles.badge}>범죄 주의 단계 점수</span>
               <p className={styles.score}>
                 {formatNumber(data.score)}
                 {data.score != null && <small> / 100</small>}
               </p>
-              <p>공식 안전등급·범죄 발생 확률이 아닙니다.</p>
               {data.status !== 'OK' && (
                 <p role="status">
                   판별된 자료가 없어 지수를 제공하지 않습니다.
@@ -152,9 +147,6 @@ function CompareResultModal({ result, crimeType, onClose }) {
               )}
               <section aria-label={`${slot} 범죄 유형별 점수`}>
                 <h4>범죄 유형별 점수 · 예시</h4>
-                <p className={styles.typeDescription}>
-                  각 유형의 별도 가상 집계로 계산한 색상 평균 지수입니다.
-                </p>
                 <dl className={styles.typeScores}>
                   {CRIME_TYPES.filter(({ id }) => id !== 'TOT').map(
                     ({ id, label }) => (
@@ -285,10 +277,6 @@ function CompareResultModal({ result, crimeType, onClose }) {
           </section>
         </div>
       </details>
-      <p className={styles.notice}>
-        가상 fixture · 실제 관측 기간 없음 · 조회 시각{' '}
-        {new Date(result.queriedAt).toLocaleString('ko-KR')} · {result.version}
-      </p>
     </dialog>
   )
 }
