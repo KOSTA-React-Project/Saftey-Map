@@ -40,7 +40,6 @@ function CompareSetupPage() {
     fromExplore,
     stateFromExplore,
   )
-  const [scenario, setScenario] = useState('normal')
   const controllerRef = useRef(null)
   const compareButtonRef = useRef(null)
   const map = useMap()
@@ -129,7 +128,7 @@ function CompareSetupPage() {
     try {
       const result = await comparePlaces(
         { A: state.A, B: state.B, radius: state.radius },
-        { signal: controller.signal, scenario },
+        { signal: controller.signal },
       )
       dispatch({ type: 'success', result, revision, requestId })
     } catch (error) {
@@ -179,9 +178,7 @@ function CompareSetupPage() {
           <p className={styles.eyebrow}>COMPARE / 01</p>
           <h1>어느 두 동네를 비교할까요?</h1>
           <p>지도에서 두 지점을 고르면 같은 반경으로 비교할 수 있어요.</p>
-          <span className={styles.badge}>
-            같은 반경 · 같은 기준으로 비교
-          </span>
+          <span className={styles.badge}>같은 반경 · 같은 기준으로 비교</span>
           <section className={styles.section} aria-labelledby="point-heading">
             <h2 id="point-heading">1 비교 지점</h2>
             {['A', 'B'].map((slot) => (
@@ -218,9 +215,7 @@ function CompareSetupPage() {
               때마다 다음 선택 지점은 A/B로 번갈아 바뀝니다.
             </p>
             {!map && (
-              <p role="status">
-                지도를 준비하고 있어요. 잠시만 기다려 주세요.
-              </p>
+              <p role="status">지도를 준비하고 있어요. 잠시만 기다려 주세요.</p>
             )}
           </section>
           <fieldset className={styles.section}>
@@ -244,21 +239,6 @@ function CompareSetupPage() {
               기준입니다. 지점이나 반경을 바꾸면 이전 결과는 지워집니다.
             </p>
           </fieldset>
-          <label className={styles.scenario}>
-            응답 상태
-            <select
-              value={scenario}
-              onChange={(event) => {
-                setScenario(event.target.value)
-                change({ type: 'radius', radius: state.radius })
-              }}
-            >
-              <option value="normal">정상</option>
-              <option value="slow">느린 응답 · 2초</option>
-              <option value="error">실패 재현</option>
-              <option value="empty">데이터 없음</option>
-            </select>
-          </label>
           {state.status === 'loading' && (
             <p role="status">
               결과를 준비하고 있어요. 지점·반경 변경 시 요청이 취소됩니다.
@@ -270,8 +250,9 @@ function CompareSetupPage() {
             </p>
           )}
           <p>
-            지도는 Kakao Maps와 생활안전지도 자료를 표시합니다. 비교 결과는
-            참고용이며 실제 범죄 확률을 뜻하지 않습니다.
+            지도는 Kakao Maps와 생활안전지도 자료를 표시합니다. 비교 점수는
+            서버가 원본 WMS 이미지에서 집계합니다. 자료가 없거나 분석이 실패하면
+            점수를 제공하지 않습니다. 점수는 실제 범죄 확률을 뜻하지 않습니다.
           </p>
         </div>
       </Sidebar>

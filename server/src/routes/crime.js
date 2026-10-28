@@ -1,34 +1,14 @@
+import { createCrimeSource, readLimited } from '../crime/source.js'
 import process from 'node:process'
 import { Router } from 'express'
 import { rateLimit } from 'express-rate-limit'
 
-const BASE = 'https://www.safemap.go.kr/openapi2/'
 const STYLES = new Set(
   ['Tot', 'Brglr', 'Rape', 'Violn', 'Theft', 'Murder'].map(
     (type) => `A2SM_CrmnlHspot_Tot_${type}`,
   ),
 )
 const PNG = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])
-
-async function readLimited(response, limit) {
-  if (Number(response.headers.get('content-length')) > limit)
-    throw new Error('too large')
-  const reader = response.body.getReader()
-  const chunks = []
-  let length = 0
-  try {
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-      length += value.length
-      if (length > limit) throw new Error('too large')
-      chunks.push(Buffer.from(value))
-    }
-    return Buffer.concat(chunks)
-  } finally {
-    await reader.cancel().catch(() => {})
-  }
-}
 
 // 원천 URL·레이어·좌표계는 서버에서 고정한다. 임의 URL을 받는 프록시가 아니다.
 export function createCrimeRouter({
@@ -48,18 +28,7 @@ export function createCrimeRouter({
     }),
   )
 
-  async function upstream(path, params) {
-    const url = new URL(path, BASE)
-    for (const [key, value] of Object.entries(params))
-      url.searchParams.set(key, value)
-    url.searchParams.set('serviceKey', serviceKey)
-    const response = await fetchImpl(url, {
-      signal: AbortSignal.timeout(10000),
-      redirect: 'error',
-    })
-    if (!response.ok) throw new Error('upstream failed')
-    return response
-  }
+  const { upstream } = createCrimeSource({ serviceKey, fetchImpl })
 
   router.get('/crime-image', async (req, res) => {
     const { bbox, size = '1024', style = 'A2SM_CrmnlHspot_Tot_Tot' } = req.query
@@ -94,11 +63,9 @@ export function createCrimeRouter({
     let entry = cache.get(key)
     if (!entry || entry.expires <= Date.now()) {
       if (active >= 4)
-        return res
-          .status(503)
-          .json({
-            message: '지도를 준비 중입니다. 잠시 후 다시 시도해 주세요.',
-          })
+        return res.status(503).json({
+          message: '지도를 준비 중입니다. 잠시 후 다시 시도해 주세요.',
+        })
       active++
       const promise = (async () => {
         const response = await upstream('IF_0087_WMS', {

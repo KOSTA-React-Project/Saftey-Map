@@ -1,3 +1,8 @@
+import {
+  summarizeCounts,
+  compareMetrics,
+} from '../../src/services/colorMetrics.js'
+import { CRIME_TYPES } from '../../src/constants/crimeTypes.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import process from 'node:process'
@@ -150,7 +155,26 @@ test('390px·태블릿·1440px: 패널/메뉴/입력/비교 모달/관리자 카
           pageSize: 10,
           counts: { PENDING: 1, APPROVED: 0, REJECTED: 0, HIDDEN: 0 },
         }
-      else if (url.pathname === '/api/notes/1') data = note
+      else if (url.pathname === '/api/public-data/crime-compare') {
+        // 브라우저 레이아웃 검증용 HTTP fixture. 실제 원천 호출 검증과 구분한다.
+        const conditions = route.request().postDataJSON()
+        const metrics = summarizeCounts(Array(10).fill(1), 0, 0)
+        const dataByType = {
+          ...metrics,
+          byCrimeType: Object.fromEntries(
+            CRIME_TYPES.map(({ id }) => [id, metrics]),
+          ),
+        }
+        data = {
+          conditions,
+          A: dataByType,
+          B: dataByType,
+          comparison: compareMetrics(metrics, metrics),
+          synthetic: false,
+          queriedAt: 'test-fixture',
+          source: { period: '테스트 fixture' },
+        }
+      } else if (url.pathname === '/api/notes/1') data = note
       else if (url.pathname.includes('crime-legend'))
         data = {
           header: { resultCode: '00' },

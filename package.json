@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "test": "node --test server/tests/notes-api.test.mjs server/tests/crime-proxy.test.mjs",
+    "test": "node --test server/tests/notes-api.test.mjs server/tests/crime-proxy.test.mjs server/tests/wms-analysis.test.mjs",
     "test:e2e": "node --test tests/*.test.mjs server/tests/map-notes.test.mjs",
-    "test:api": "node --test server/tests/notes-api.test.mjs server/tests/crime-proxy.test.mjs",
+    "test:api": "node --test server/tests/notes-api.test.mjs server/tests/crime-proxy.test.mjs server/tests/wms-analysis.test.mjs",
     "dev:server": "npm --prefix server run dev",
     "start:server": "npm --prefix server start",
     "dev": "vite",
@@ -16,7 +16,8 @@
     "preview": "vite preview",
     "test:compare": "node --test server/tests/compare-metrics.test.mjs",
     "test:compare:browser": "node --test server/tests/compare-modal.test.mjs",
-    "test:responsive": "node --test server/tests/mobile-responsive.test.mjs"
+    "test:responsive": "node --test server/tests/mobile-responsive.test.mjs",
+    "test:wms": "node --test server/tests/wms-analysis.test.mjs"
   },
   "dependencies": {
     "react": "^19.3.1",

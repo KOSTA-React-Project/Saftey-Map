@@ -1,35 +1,10 @@
-import { CRIME_TYPES } from '../constants/crimeTypes.js'
 import { isValidPosition } from '../utils/compareState.js'
-
 export { summarizeCounts } from './colorMetrics.js'
-import { summarizeCounts, compareMetrics } from './colorMetrics.js'
 
-function fixtureFor(point, radius, typeIndex = 0) {
-  const seed =
-    Math.abs(Math.round(point.lat * 1000) + Math.round(point.lng * 1000)) +
-    radius / 500 +
-    typeIndex * 17
-  return summarizeCounts(
-    Array.from({ length: 10 }, (_, i) => 5 + ((seed + i * 3) % 13)),
-    12,
-    28,
-  )
-}
-
-function fixturesByCrimeType(point, radius) {
-  const byCrimeType = Object.fromEntries(
-    CRIME_TYPES.map((type, index) => [
-      type.id,
-      fixtureFor(point, radius, index),
-    ]),
-  )
-  // 전체 레이어는 개별 유형 점수의 합/평균이 아니라 별도 집계다.
-  return { ...byCrimeType.TOT, byCrimeType }
-}
-
+// 결과는 서버의 원본 WMS 분석만 사용한다. 데모/실패 시나리오는 운영 경로에 없다.
 export async function comparePlaces(
   conditions,
-  { signal, scenario = 'normal' } = {},
+  { signal, fetchImpl = fetch } = {},
 ) {
   if (
     !isValidPosition(conditions.A) ||
@@ -38,39 +13,36 @@ export async function comparePlaces(
   )
     throw new Error('두 지점과 공통 반경을 확인해 주세요.')
   const snapshot = structuredClone(conditions)
-  await new Promise((resolve, reject) => {
-    if (signal?.aborted) {
-      reject(new DOMException('취소됨', 'AbortError'))
-      return
-    }
-    const abort = () => {
-      clearTimeout(timer)
-      reject(new DOMException('취소됨', 'AbortError'))
-    }
-    const timer = setTimeout(
-      () => {
-        signal?.removeEventListener('abort', abort)
-        resolve()
-      },
-      scenario === 'slow' ? 2000 : 350,
-    )
-    signal?.addEventListener('abort', abort, { once: true })
+  const response = await fetchImpl('/api/public-data/crime-compare', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    signal,
+    body: JSON.stringify({
+      A: { lat: snapshot.A.lat, lng: snapshot.A.lng },
+      B: { lat: snapshot.B.lat, lng: snapshot.B.lng },
+      radius: snapshot.radius,
+    }),
   })
-  if (scenario === 'error')
-    throw new Error(
-      '요청을 처리하지 못했습니다. 정상 모드로 바꾸고 다시 비교해 주세요.',
-    )
-  if (scenario === 'empty')
-    throw new Error('분석할 데이터가 없습니다. 결과는 제공하지 않습니다.')
-  const A = fixturesByCrimeType(snapshot.A, snapshot.radius)
-  const B = fixturesByCrimeType(snapshot.B, snapshot.radius)
-  return {
-    conditions: snapshot,
-    A,
-    B,
-    comparison: compareMetrics(A, B),
-    synthetic: true,
-    queriedAt: new Date().toISOString(),
-    version: 'demo-crime-types-v3',
+  let result
+  try {
+    result = await response.json()
+  } catch (error) {
+    if (error.name === 'AbortError') throw error
+    throw new Error('분석 서버의 응답을 확인할 수 없습니다.', { cause: error })
   }
+  if (!response.ok)
+    throw new Error(result.message || '분석 요청에 실패했습니다.')
+  if (
+    result.synthetic !== false ||
+    !result.A?.byCrimeType ||
+    !result.B?.byCrimeType ||
+    result.conditions?.radius !== snapshot.radius ||
+    ['A', 'B'].some(
+      (slot) =>
+        result.conditions?.[slot]?.lat !== snapshot[slot].lat ||
+        result.conditions?.[slot]?.lng !== snapshot[slot].lng,
+    )
+  )
+    throw new Error('분석 결과와 요청 조건이 일치하지 않습니다.')
+  return { ...result, conditions: snapshot }
 }
