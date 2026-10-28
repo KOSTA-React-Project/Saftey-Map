@@ -1,5 +1,56 @@
 import styles from './AuthIllustration.module.css'
 
+// 범죄주의구간 1~10등급 색 (생활안전지도 범례 /api/public-data/crime-legend 값을 옮겨 옴)
+const GRADE_COLORS = [
+  '#ffffb2',
+  '#fee88b',
+  '#fed165',
+  '#fdb751',
+  '#fd9b43',
+  '#fa7a35',
+  '#f45629',
+  '#ea3420',
+  '#d31a23',
+  '#bd0026',
+]
+
+// 장식용 길 [경로, 굵기, 범죄주의구간 등급] — 실제 데이터가 아닌 비슷한 모양
+// 실제 지도처럼 대부분 길이 노랑, 길이 촘촘한 곳에 주황·빨강이 모이게 배치
+const ROADS = [
+  // 큰길
+  ['M0 210H250', 18, 3],
+  ['M250 210H600', 18, 5],
+  ['M250 0V210', 18, 2],
+  ['M250 210V480', 18, 4],
+  // 골목
+  ['M0 110H600', 10, 2],
+  ['M0 300H380', 10, 3],
+  ['M380 300H600', 10, 7],
+  ['M120 0V480', 10, 2],
+  ['M370 0V300', 10, 4],
+  ['M500 0V210', 10, 3],
+  // 촘촘한 동네 (주황·빨강)
+  ['M380 240H600', 5, 8],
+  ['M380 270H600', 5, 9],
+  ['M410 210V330', 5, 7],
+  ['M440 210V330', 5, 10],
+  ['M470 210V330', 5, 8],
+  ['M530 210V330', 5, 6],
+  ['M560 210V330', 5, 7],
+  // 위쪽 작은 길 (노랑)
+  ['M20 160H230', 5, 1],
+  ['M60 110V210', 5, 2],
+  ['M180 110V210', 5, 1],
+  ['M290 60H600', 5, 2],
+  ['M430 0V110', 5, 3],
+]
+
+// 안심노트 핀 위치 (핀 끝이 가리키는 점)
+const NOTE_PINS = [
+  [175, 160],
+  [330, 262],
+]
+
 // 로그인·회원가입 화면 왼쪽 장식 그림 — 지도 위에 안심노트 마커가 꽂힌 모습
 // 실제 지도(SDK)를 불러오지 않아 가볍고, 영역 크기에 맞춰 잘려서 채워짐
 function AuthIllustration({ className }) {
@@ -11,32 +62,51 @@ function AuthIllustration({ className }) {
         preserveAspectRatio="xMidYMid slice"
         aria-hidden="true"
       >
-        {/* 바탕과 공원 */}
-        <rect width="600" height="480" fill="var(--color-map-placeholder)" />
-        <path
-          d="M40 60h150v110H40zM400 300h170v130H400z"
-          fill="var(--color-primary-soft)"
-        />
+        <defs>
+          {/* 범죄주의구간 색이 길 주변으로 번져 보이게 */}
+          <filter
+            id="auth-crime-glow"
+            x="-10%"
+            y="-10%"
+            width="120%"
+            height="120%"
+          >
+            <feGaussianBlur stdDeviation="4" />
+          </filter>
+        </defs>
 
-        {/* 강 */}
+        {/* 바탕, 공원, 강 */}
+        <rect width="600" height="480" fill="#e4eae0" />
+        <path d="M20 20h80v70H20zM140 330h90v120h-90z" fill="#b3d7aa" />
         <path
-          d="M-20 380C120 340 200 420 320 390S520 300 640 330"
+          d="M-20 410C120 370 200 450 320 420S520 350 640 380"
           fill="none"
-          stroke="#d3e3ea"
-          strokeWidth="46"
+          stroke="#8fc2db"
+          strokeWidth="44"
         />
 
-        {/* 범죄주의구간을 떠올리게 하는 옅은 색 영역 */}
-        <circle cx="430" cy="140" r="90" fill="#fee88b" opacity="0.45" />
-        <circle cx="455" cy="125" r="45" fill="#fd8d3c" opacity="0.25" />
-
-        {/* 도로: 큰길과 골목 */}
+        {/* 길 */}
         <g stroke="var(--color-white)" strokeLinecap="round" fill="none">
-          <path d="M0 210H600M250 0V480" strokeWidth="18" />
-          <path
-            d="M0 110H600M0 300H600M120 0V480M370 0V480M500 0V480"
-            strokeWidth="8"
-          />
+          {ROADS.map(([d, width]) => (
+            <path key={d} d={d} strokeWidth={width} />
+          ))}
+        </g>
+
+        {/* 범죄주의구간: 길을 따라 등급 색 */}
+        <g
+          fill="none"
+          strokeLinecap="round"
+          opacity="0.8"
+          filter="url(#auth-crime-glow)"
+        >
+          {ROADS.map(([d, width, grade]) => (
+            <path
+              key={d}
+              d={d}
+              stroke={GRADE_COLORS[grade - 1]}
+              strokeWidth={width + 10}
+            />
+          ))}
         </g>
 
         {/* 고른 지점(A)과 반경 */}
@@ -45,39 +115,35 @@ function AuthIllustration({ className }) {
           cy="210"
           r="95"
           fill="var(--color-primary)"
-          fillOpacity="0.08"
+          fillOpacity="0.12"
           stroke="var(--color-primary)"
-          strokeDasharray="6 6"
-          strokeWidth="2"
+          strokeDasharray="7 6"
+          strokeWidth="2.5"
         />
         <circle
           cx="250"
           cy="210"
-          r="16"
+          r="17"
           fill="var(--color-primary)"
           stroke="var(--color-white)"
           strokeWidth="4"
         />
 
         {/* 안심노트 핀 마커 */}
-        {[
-          [190, 150],
-          [330, 255],
-          [440, 120],
-        ].map(([x, y]) => (
+        {NOTE_PINS.map(([x, y]) => (
           <g key={`${x}-${y}`} transform={`translate(${x} ${y})`}>
             <path
-              d="M0 0C-12-16-18-24-18-32a18 18 0 0 1 36 0c0 8-6 16-18 32z"
+              d="M0 0C-13-17-20-26-20-35a20 20 0 0 1 40 0c0 9-7 18-20 35z"
               fill="var(--color-community)"
               stroke="var(--color-white)"
               strokeWidth="3"
             />
-            <circle cy="-32" r="6" fill="var(--color-white)" />
+            <circle cy="-35" r="7" fill="var(--color-white)" />
           </g>
         ))}
 
         {/* 메모 말풍선 */}
-        <g transform="translate(350 160)">
+        <g transform="translate(350 150)">
           <path
             d="M0 0h120a10 10 0 0 1 10 10v44a10 10 0 0 1-10 10H34l-14 14V64H10A10 10 0 0 1 0 54V10A10 10 0 0 1 10 0z"
             fill="var(--color-white)"
