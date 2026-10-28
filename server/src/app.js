@@ -1,4 +1,5 @@
 import express from 'express'
+import { createCompareRouter } from './routes/compare.js'
 import { createCrimeRouter } from './routes/crime.js'
 import { createNotesRouter, HttpError } from './notes/router.js'
 
@@ -9,6 +10,7 @@ export function createApp({
   authenticate = (req, res, next) => next(),
   authRouter,
   crimeOptions,
+  compareOptions,
   allowedOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'],
 } = {}) {
   const app = express()
@@ -52,6 +54,7 @@ export function createApp({
   // 회원가입·로그인 API (index.js에서 전달, 테스트에서는 생략 가능)
   if (authRouter) app.use('/api/auth', authRouter)
   app.use('/api/public-data', createCrimeRouter(crimeOptions))
+  app.use('/api/public-data', createCompareRouter(compareOptions))
   app.use('/api', createNotesRouter({ repository, authenticate }))
   app.use((req, res) =>
     res.status(404).json({ message: 'API를 찾을 수 없습니다.' }),

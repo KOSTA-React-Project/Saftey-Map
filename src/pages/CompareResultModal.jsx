@@ -82,6 +82,13 @@ function CompareResultModal({ result, crimeType, onClose }) {
           지점·반경 다시 선택 / 닫기
         </button>
       </div>
+      {result.synthetic === false && (
+        <p role="status">
+          실제 WMS 원본 분석 · {result.conditions.radius}m · 조회{' '}
+          {result.queriedAt} · 기준 기간 {result.source?.period}
+        </p>
+      )}
+      <p>점수가 높을수록 범죄 주의 단계가 높습니다.</p>
       <div className={styles.tabs} role="tablist" aria-label="비교 지점 전환">
         {['A', 'B'].map((slot) => (
           <button
@@ -264,14 +271,23 @@ function CompareResultModal({ result, crimeType, onClose }) {
             </p>
           </section>
           <section aria-label="분석의 한계">
+            {result.source?.classifier && (
+              <p>
+                원본 분류 설정: alpha ≥ {result.source.classifier.alphaMin}, RGB
+                거리 ≤ {result.source.classifier.maxDistance}, 2순위 거리 차이
+                &gt; {result.source.classifier.minGap}. 시험 설정이며 낮은
+                alpha·애매한 색상은 미분류입니다. 사용자 지정 색상과 제한된
+                유사색 추정 규칙을 우선 적용합니다.
+              </p>
+            )}
             <h3>분석의 한계</h3>
             <p>
               조건부 범위는 미분류를 모두 1등급 또는 10등급으로 가정한 값으로
               신뢰구간이 아닙니다. 오분류·공간 오차를 포함하지 않습니다.
             </p>
             <p>
-              지도는 생활안전지도 자료를 표시합니다. 점수는 참고용 지표로,
-              실제 범죄 확률이나 도로 길이 비율을 뜻하지 않습니다.
+              지도는 생활안전지도 자료를 표시합니다. 점수는 참고용 지표로, 실제
+              범죄 확률이나 도로 길이 비율을 뜻하지 않습니다.
             </p>
           </section>
         </div>
