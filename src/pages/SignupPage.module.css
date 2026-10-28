@@ -92,3 +92,9 @@
   font-weight: var(--font-weight-bold);
   text-decoration: underline;
 }
+
+@media (max-width: 1199px) {
+  .input {
+    font-size: var(--font-size-md);
+  }
+}

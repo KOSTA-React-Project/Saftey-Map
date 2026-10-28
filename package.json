@@ -15,7 +15,8 @@
     "format": "prettier --write src",
     "preview": "vite preview",
     "test:compare": "node --test server/tests/compare-metrics.test.mjs",
-    "test:compare:browser": "node --test server/tests/compare-modal.test.mjs"
+    "test:compare:browser": "node --test server/tests/compare-modal.test.mjs",
+    "test:responsive": "node --test server/tests/mobile-responsive.test.mjs"
   },
   "dependencies": {
     "react": "^19.3.1",

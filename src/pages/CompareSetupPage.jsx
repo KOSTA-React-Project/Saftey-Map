@@ -177,11 +177,7 @@ function CompareSetupPage() {
       <Sidebar footer={footer}>
         <div className={styles.content}>
           <p className={styles.eyebrow}>COMPARE / 01</p>
-          <h1>
-            어느 두 동네를
-            <br />
-            비교할까요?
-          </h1>
+          <h1>어느 두 동네를 비교할까요?</h1>
           <p>지도에서 두 지점을 고르면 같은 반경으로 비교할 수 있어요.</p>
           <span className={styles.badge}>
             비교 수치는 예시 · 실제 분석 미연결

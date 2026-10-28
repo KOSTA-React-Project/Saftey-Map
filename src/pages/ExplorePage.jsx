@@ -69,7 +69,10 @@ function ExplorePage() {
 
   return (
     <>
-      <Sidebar>
+      <Sidebar
+        key={noteSpots.isOpen ? 'detail' : 'overview'}
+        initialExpanded={noteSpots.isOpen}
+      >
         {noteSpots.isOpen ? (
           <NoteSpotPanel
             spot={noteSpots.spot}

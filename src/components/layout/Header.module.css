@@ -95,3 +95,90 @@
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
 }
+
+.menuToggle,
+.menuClose {
+  display: none;
+}
+@media (max-width: 1199px) {
+  .header {
+    display: flex;
+    justify-content: space-between;
+    padding-inline: var(--space-16);
+  }
+  .logo {
+    gap: var(--space-8);
+    font-size: var(--font-size-lg);
+    min-width: 0;
+  }
+  .logoIcon {
+    width: var(--space-16);
+    height: var(--space-24);
+    flex-shrink: 0;
+  }
+  .menuToggle,
+  .menuClose {
+    display: block;
+    min-width: var(--touch-target);
+    min-height: var(--touch-target);
+    padding: var(--space-8);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-white);
+  }
+  .nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    background: var(--color-white);
+    border-top: 1px solid var(--color-border);
+  }
+  .navItem {
+    justify-content: center;
+    padding: var(--space-8);
+    font-size: var(--font-size-sm);
+  }
+  .active {
+    background: var(--color-primary-soft);
+  }
+  .active::after {
+    bottom: auto;
+    top: 0;
+  }
+  .actions {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: var(--space-16);
+    left: var(--space-16);
+    padding: var(--space-16);
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    flex-direction: column;
+    max-height: calc(100dvh - var(--header-height) - var(--mobile-nav-height));
+    overflow-y: auto;
+  }
+  .menuOpen {
+    display: flex;
+  }
+  .actionButton {
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .userName {
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 1199px) {
+  .logo {
+    min-height: var(--touch-target);
+  }
+}

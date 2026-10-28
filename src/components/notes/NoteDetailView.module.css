@@ -62,3 +62,10 @@
   background: var(--color-surface);
   border-radius: var(--radius-md);
 }
+
+.info {
+  grid-template-columns: var(--space-48) minmax(0, 1fr);
+}
+.content {
+  overflow-wrap: anywhere;
+}

@@ -1,0 +1,10 @@
+.main {
+  min-width: 0;
+}
+@media (max-width: 1199px) {
+  .main {
+    padding-bottom: calc(
+      var(--mobile-nav-height) + env(safe-area-inset-bottom)
+    );
+  }
+}

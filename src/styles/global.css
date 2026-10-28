@@ -45,3 +45,40 @@ select {
 button {
   cursor: pointer;
 }
+
+/* 폭을 숨겨 오류를 감추지 않고, 긴 입력·본문이 컨테이너 안에서 줄바꿈되도록 한다. */
+input,
+textarea,
+select {
+  max-width: 100%;
+  min-width: 0;
+}
+p,
+h1,
+h2,
+h3,
+dd {
+  overflow-wrap: anywhere;
+}
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: var(--space-4);
+}
+@media (max-width: 1199px) {
+  input,
+  textarea,
+  select {
+    font-size: var(--font-size-md);
+  }
+}
+
+[id='note-compose-form'],
+[id='note-location-map'] {
+  scroll-margin-top: calc(var(--header-height) + var(--space-16));
+}
+
+@media (max-width: 1199px) {
+  button {
+    min-height: var(--touch-target);
+  }
+}

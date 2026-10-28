@@ -47,3 +47,10 @@
   --sidebar-width: 380px;
   --touch-target: 44px;
 }
+
+@media (max-width: 1199px) {
+  :root {
+    --header-height: 64px;
+    --mobile-nav-height: 64px;
+  }
+}
