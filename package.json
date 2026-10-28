@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "test": "node --test server/tests/notes-api.test.mjs server/tests/crime-proxy.test.mjs server/tests/wms-analysis.test.mjs",
+    "test": "node --test server/tests/notes-api.test.mjs server/tests/crime-proxy.test.mjs server/tests/wms-analysis.test.mjs server/tests/signup-email.test.mjs",
     "test:e2e": "node --test tests/*.test.mjs server/tests/map-notes.test.mjs",
-    "test:api": "node --test server/tests/notes-api.test.mjs server/tests/crime-proxy.test.mjs server/tests/wms-analysis.test.mjs",
+    "test:api": "node --test server/tests/notes-api.test.mjs server/tests/crime-proxy.test.mjs server/tests/wms-analysis.test.mjs server/tests/signup-email.test.mjs",
     "dev:server": "npm --prefix server run dev",
     "start:server": "npm --prefix server start",
     "dev": "vite",

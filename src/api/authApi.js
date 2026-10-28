@@ -1,3 +1,5 @@
+import { getSignupEmailError } from '../../server/src/shared/signupEmail.js'
+
 // 회원 API — server/src/routes/auth.js 호출
 //   POST /api/auth/signup  → signup (가입 후 바로 로그인)
 //   POST /api/auth/login   → login
@@ -66,7 +68,8 @@ export function validateSignup({
   agreed,
 }) {
   const errors = []
-  validateEmail(email, errors)
+  const emailError = getSignupEmailError(email)
+  if (emailError) errors.push(emailError)
 
   const trimmedNickname = (nickname ?? '').trim()
   if (!trimmedNickname) errors.push('닉네임을 입력하세요.')
