@@ -20,8 +20,12 @@ export async function scorePlace(
     if (error.name === 'AbortError') throw error
     throw new Error('분석 서버의 응답을 확인할 수 없습니다.', { cause: error })
   }
-  if (!response.ok)
-    throw new Error(result.message || '분석 요청에 실패했습니다.')
+  if (!response.ok) {
+    const error = new Error(result.message || '분석 요청에 실패했습니다.')
+    // 화면에서 '처리 중(ANALYSIS_BUSY)'이면 한 번 다시 시도하려고 서버 코드를 함께 넘김
+    error.code = result.code
+    throw error
+  }
   if (
     result.synthetic !== false ||
     !result.result?.byCrimeType ||

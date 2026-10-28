@@ -47,28 +47,53 @@ function formatNumber(value, suffix = '') {
 }
 
 // 지도 탐색 왼쪽 패널 — 고른 지점 하나의 분석 결과 (두 지역 비교 결과를 한 지역으로 줄인 모양)
+// point·radius는 지금 지도에서 고른 값. 분석은 패널을 열 때와 '변경 위치로 분석하기'를 누를 때만 함
 function PointScorePanel({ point, address, radius, crimeType, onBack }) {
-  const [state, setState] = useState({ status: 'loading' })
+  // 분석할(했던) 지점·반경. 지도에서 위치를 바꿔도 버튼을 누르기 전까지는 그대로
+  const [target, setTarget] = useState({ point, radius, address })
+  // result: 마지막으로 받은 결과 (다시 분석하는 동안에도 흐리게 보여 줌)
+  const [state, setState] = useState({ status: 'loading', result: null })
 
-  // 지점이나 반경이 바뀌면 화면에서 key가 바뀌어 처음(loading)부터 다시 분석
   useEffect(() => {
     const controller = new AbortController()
-    // 개발 모드에서 두 번 실행돼도 요청은 한 번만 가도록 다음 차례로 미룸
-    const timer = setTimeout(() => {
-      scorePlace({ point, radius }, { signal: controller.signal })
+    let retryTimer
+    const run = (retried) =>
+      scorePlace(target, { signal: controller.signal })
         .then((result) => setState({ status: 'ready', result }))
         .catch((error) => {
-          if (error.name !== 'AbortError')
-            setState({ status: 'error', message: error.message })
+          if (error.name === 'AbortError') return
+          // 앞 분석이 서버에서 정리되는 중이면 1초 뒤 한 번만 다시 시도
+          if (error.code === 'ANALYSIS_BUSY' && !retried) {
+            retryTimer = setTimeout(() => run(true), 1000)
+            return
+          }
+          setState((prev) => ({
+            ...prev,
+            status: 'error',
+            message: error.message,
+          }))
         })
-    }, 0)
+    // 개발 모드에서 두 번 실행돼도 요청은 한 번만 가도록 다음 차례로 미룸
+    const timer = setTimeout(() => run(false), 0)
     return () => {
       clearTimeout(timer)
+      clearTimeout(retryTimer)
       controller.abort()
     }
-  }, [point, radius])
+  }, [target])
+
+  // 지도에서 고른 위치·반경이 분석한 것과 다르면 '변경 위치로 분석하기' 버튼을 보여 줌
+  const changed =
+    point.lat !== target.point.lat ||
+    point.lng !== target.point.lng ||
+    radius !== target.radius
+  const analyzeChanged = () => {
+    setState((prev) => ({ ...prev, status: 'loading' }))
+    setTarget({ point, radius, address })
+  }
 
   const data = state.result?.result
+  const showResult = Boolean(data) && state.status !== 'error'
 
   return (
     <section aria-label="선택한 지점 분석 결과">
@@ -81,6 +106,19 @@ function PointScorePanel({ point, address, radius, crimeType, onBack }) {
       <h2>선택한 동네를 같은 반경으로</h2>
       <p>점수가 높을수록 범죄 주의 단계가 높습니다.</p>
 
+      {changed && (
+        <div className={styles.notice} role="status">
+          <p>위치가 바뀌었어요. 아래 결과는 이전 위치 기준이에요.</p>
+          <button
+            type="button"
+            className={styles.button}
+            disabled={state.status === 'loading'}
+            onClick={analyzeChanged}
+          >
+            변경 위치로 분석하기
+          </button>
+        </div>
+      )}
       {state.status === 'loading' && (
         <p role="status">
           원본 지도 이미지를 분석하고 있어요. 잠시만 기다려 주세요.
@@ -92,12 +130,20 @@ function PointScorePanel({ point, address, radius, crimeType, onBack }) {
         </p>
       )}
 
-      {state.status === 'ready' && (
-        <>
+      {showResult && (
+        <div
+          style={{
+            opacity: changed || state.status === 'loading' ? 0.5 : 1,
+          }}
+        >
           <section aria-label="지점 분석 결과" className={styles.resultCard}>
             <h3>선택한 지점 주변</h3>
-            <p>{address || '주소를 확인할 수 없는 위치'}</p>
-            <ResultMap point={point} radius={radius} crimeType={crimeType} />
+            <p>{target.address || '주소를 확인할 수 없는 위치'}</p>
+            <ResultMap
+              point={target.point}
+              radius={target.radius}
+              crimeType={crimeType}
+            />
             <span className={styles.badge}>범죄 주의 단계 점수</span>
             <p className={styles.score}>
               {formatNumber(data.score)}
@@ -214,7 +260,7 @@ function PointScorePanel({ point, address, radius, crimeType, onBack }) {
               </section>
             </div>
           </details>
-        </>
+        </div>
       )}
     </section>
   )

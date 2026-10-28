@@ -86,7 +86,6 @@ function ExplorePage() {
           />
         ) : scoreOpen && pointA ? (
           <PointScorePanel
-            key={`${pointA.lat},${pointA.lng},${radius}`}
             point={pointA}
             address={location?.address}
             radius={radius}
