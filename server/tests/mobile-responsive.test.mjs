@@ -226,7 +226,7 @@ test('390px·태블릿·1440px: 패널/메뉴/입력/비교 모달/관리자 카
   assert.equal(Math.round(bounds.width), 390)
   await page.getByRole('tab', { name: 'B 지역' }).click()
   assert.equal(
-    await page.getByRole('region', { name: 'B 지역 예시 결과' }).isVisible(),
+    await page.getByRole('region', { name: 'B 지역 비교 결과' }).isVisible(),
     true,
   )
   await page.screenshot({ path: '/tmp/ansim-responsive-compare.png' })

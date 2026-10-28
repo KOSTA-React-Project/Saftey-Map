@@ -58,10 +58,10 @@ export async function comparePlaces(
   })
   if (scenario === 'error')
     throw new Error(
-      '예시 요청 실패를 재현했습니다. 정상 모드로 바꾸고 다시 비교해 주세요.',
+      '요청을 처리하지 못했습니다. 정상 모드로 바꾸고 다시 비교해 주세요.',
     )
   if (scenario === 'empty')
-    throw new Error('분석할 예시 데이터가 없습니다. 결과는 제공하지 않습니다.')
+    throw new Error('분석할 데이터가 없습니다. 결과는 제공하지 않습니다.')
   const A = fixturesByCrimeType(snapshot.A, snapshot.radius)
   const B = fixturesByCrimeType(snapshot.B, snapshot.radius)
   return {

@@ -70,7 +70,7 @@ function CompareResultModal({ result, crimeType, onClose }) {
     >
       <div className={styles.modalHeader}>
         <div>
-          <p className={styles.eyebrow}>COMPARE / 02 · 예시 결과</p>
+          <p className={styles.eyebrow}>COMPARE / 02 · 비교 결과</p>
           <h2 id="compare-result-title">두 동네를 같은 반경으로 나란히</h2>
         </div>
         <button
@@ -124,7 +124,7 @@ function CompareResultModal({ result, crimeType, onClose }) {
             <section
               key={slot}
               id={`result-${slot}`}
-              aria-label={`${slot} 지역 예시 결과`}
+              aria-label={`${slot} 지역 비교 결과`}
               className={`${styles.resultCard} ${tab !== slot ? styles.inactive : ''}`}
             >
               <h3>{slot} 지점 주변</h3>
@@ -146,7 +146,7 @@ function CompareResultModal({ result, crimeType, onClose }) {
                 </p>
               )}
               <section aria-label={`${slot} 범죄 유형별 점수`}>
-                <h4>범죄 유형별 점수 · 예시</h4>
+                <h4>범죄 유형별 점수</h4>
                 <dl className={styles.typeScores}>
                   {CRIME_TYPES.filter(({ id }) => id !== 'TOT').map(
                     ({ id, label }) => (
@@ -204,24 +204,24 @@ function CompareResultModal({ result, crimeType, onClose }) {
                   <h3>{slot} 지점 · 전체 유형 분석 상세</h3>
                   <dl className={styles.typeScores}>
                     <div>
-                      <dt>판별 성공 비율 · 예시</dt>
+                      <dt>판별 성공 비율</dt>
                       <dd>{formatNumber(data.displayRatio, '%')}</dd>
                     </div>
                     <div>
-                      <dt>후보 중 미분류 비율 · 예시</dt>
+                      <dt>후보 중 미분류 비율</dt>
                       <dd>{formatNumber(data.unclassifiedRatio, '%')}</dd>
                     </div>
                     <div>
-                      <dt>8~10등급 색상 비중 · 예시</dt>
+                      <dt>8~10등급 색상 비중</dt>
                       <dd>{formatNumber(data.highGradeRatio, '%')}</dd>
                     </div>
                   </dl>
                   <p>
                     유효 {data.valid ?? '없음'} / 전체 {data.total ?? '없음'}{' '}
-                    가상 픽셀 · 미분류 {data.unclassified ?? '없음'} · 미표시{' '}
+                    픽셀 · 미분류 {data.unclassified ?? '없음'} · 미표시{' '}
                     {data.unpainted ?? '없음'}
                   </p>
-                  <h4>판별된 등급 픽셀 내 분포 · 예시</h4>
+                  <h4>판별된 등급 픽셀 내 분포</h4>
                   <ol className={styles.gradeList}>
                     {(data.distribution ?? []).map((value, index) => (
                       <li key={index}>
@@ -238,8 +238,8 @@ function CompareResultModal({ result, crimeType, onClose }) {
               )
             })}
           </div>
-          <section aria-label="A/B 예시 지수 차이">
-            <h3>A/B 차이 · 예시</h3>
+          <section aria-label="A/B 지수 차이">
+            <h3>A/B 차이</h3>
             <p>
               전체 유형 기준 A − B 색상 평균 지수:{' '}
               {formatNumber(result.comparison?.scoreDifference)}
@@ -270,9 +270,8 @@ function CompareResultModal({ result, crimeType, onClose }) {
               신뢰구간이 아닙니다. 오분류·공간 오차를 포함하지 않습니다.
             </p>
             <p>
-              지도는 생활안전지도 WMS를 표시하지만 점수는 별도의 가상 집계에서
-              계산합니다. 실제 이미지 분석·범죄 확률·도로 길이 비율이 아니며,
-              공식 등급 방향·색상 매핑·이용 조건은 검증이 필요합니다.
+              지도는 생활안전지도 자료를 표시합니다. 점수는 참고용 지표로,
+              실제 범죄 확률이나 도로 길이 비율을 뜻하지 않습니다.
             </p>
           </section>
         </div>
