@@ -61,7 +61,7 @@ function SignupPage() {
             value={form.email}
             onChange={handleChange}
             autoComplete="email"
-            placeholder="you@example.com"
+            placeholder="이메일"
           />
         </label>
 
@@ -74,7 +74,7 @@ function SignupPage() {
             onChange={handleChange}
             maxLength={NICKNAME_MAX}
             autoComplete="nickname"
-            placeholder={`2~${NICKNAME_MAX}자 입력`}
+            placeholder={`닉네임 (2~${NICKNAME_MAX}자)`}
           />
         </label>
 
@@ -88,7 +88,7 @@ function SignupPage() {
             onChange={handleChange}
             maxLength={PASSWORD_MAX}
             autoComplete="new-password"
-            placeholder="8자 이상 입력"
+            placeholder="비밀번호 (8자 이상)"
           />
         </label>
 
@@ -102,7 +102,7 @@ function SignupPage() {
             onChange={handleChange}
             maxLength={PASSWORD_MAX}
             autoComplete="new-password"
-            placeholder="비밀번호를 다시 입력"
+            placeholder="비밀번호 확인"
           />
         </label>
 

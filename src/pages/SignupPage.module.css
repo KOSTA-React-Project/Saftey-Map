@@ -93,8 +93,47 @@
   text-decoration: underline;
 }
 
+/* 좁은 화면: 입력창·버튼만 보이게 */
 @media (max-width: 1199px) {
   .input {
     font-size: var(--font-size-md);
+  }
+
+  .title,
+  .description {
+    display: none;
+  }
+
+  .form {
+    margin-top: 0;
+  }
+
+  /* 라벨은 스크린리더용으로만 남김 */
+  .fieldLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* "이미 계정이 있나요?" 문구는 숨기고 로그인 링크만 버튼으로 */
+  .switch {
+    margin-top: var(--space-12);
+    font-size: 0;
+  }
+
+  .link {
+    display: flex;
+    align-items: center;
+    height: var(--touch-target);
+    padding: 0 var(--space-16);
+    font-size: var(--font-size-sm);
+    color: var(--color-text);
+    text-decoration: none;
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
   }
 }
