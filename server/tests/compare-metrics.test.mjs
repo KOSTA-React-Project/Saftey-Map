@@ -4,6 +4,7 @@ import {
   summarizeCounts,
   compareMetrics,
 } from '../../src/services/colorMetrics.js'
+import { CRIME_TYPES } from '../../src/constants/crimeTypes.js'
 import { comparePlaces } from '../../src/services/compareService.js'
 import {
   compareReducer,
@@ -195,4 +196,27 @@ test('지점·반경 변경 시 결과 무효화하고 늦은 이전 결과를 �
   assert.equal(state.result.version, 'new')
   state = compareReducer(state, { type: 'select', position: point })
   assert.equal(state.result, null)
+})
+
+test('범죄 유형별 점수는 등급 비율을 바꿔 붙이지 않고 각 유형 집계에 산식을 적용한다', async () => {
+  const result = await comparePlaces(conditions)
+  for (const slot of ['A', 'B']) {
+    const byType = result[slot].byCrimeType
+    assert.deepEqual(
+      Object.keys(byType),
+      CRIME_TYPES.map(({ id }) => id),
+    )
+    assert.equal(result[slot].score, byType.TOT.score)
+    assert.notDeepEqual(byType.BRGLR.counts, byType.RAPE.counts)
+    for (const { id } of CRIME_TYPES) {
+      const metrics = byType[id]
+      const calculated = summarizeCounts(
+        metrics.counts,
+        metrics.unclassified,
+        metrics.unpainted,
+      )
+      assert.equal(metrics.score, calculated.score)
+      assert.ok(metrics.score >= 0 && metrics.score <= 100)
+    }
+  }
 })
