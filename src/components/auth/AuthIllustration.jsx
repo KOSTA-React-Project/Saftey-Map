@@ -122,7 +122,7 @@ const ROADS = [
   {
     width: 5,
     points: [
-      [253, 256, 4],
+      [252, 256, 5],
       [372, 258, 8],
       [440, 266, 10],
       [545, 270, 6],
@@ -140,23 +140,23 @@ const ROADS = [
   {
     width: 5,
     points: [
-      [120, 150, 0],
-      [247, 154, 0],
+      [118, 150, 0],
+      [249, 154, 0],
     ],
   },
   {
     width: 5,
     points: [
-      [300, 100, 2],
-      [306, 207, 3],
+      [300, 96, 2],
+      [306, 209, 5],
     ],
   },
   {
     width: 5,
     points: [
-      [440, 90, 0],
+      [440, 89, 0],
       [456, 150, 2],
-      [530, 148, 2],
+      [532, 148, 2],
     ],
   },
 ]
@@ -213,33 +213,39 @@ const SEGMENTS = ROADS.flatMap((road, i) =>
   segmentsOf(road, i)
     .filter(({ start, end }) => start[2] > 0 || end[2] > 0)
     .map((segment) => ({ ...segment, width: road.width })),
-)
+).sort((a, b) => a.width - b.width)
 
 // 구간 색 단계 [위치, 등급, 불투명도]
-// 한쪽이 무색(0)이면 투명 → 아주 연한 노랑(1등급) → 그 등급 색으로 천천히 번지게
-function stopsOf(from, to) {
-  if (from === 0)
+// 두 등급 사이의 등급을 모두 거쳐 가서 주황 → 빨강도 끊기지 않게
+function rampOf(from, to, startOffset = 0) {
+  const steps = Math.abs(to - from)
+  const direction = Math.sign(to - from)
+  if (steps === 0)
     return [
-      [0, 1, 0],
-      [0.45, 1, 0.9],
+      [startOffset, from, 1],
       [1, to, 1],
     ]
-  if (to === 0)
-    return [
-      [0, from, 1],
-      [0.55, 1, 0.9],
-      [1, 1, 0],
-    ]
-  return [
-    [0, from, 1],
-    [1, to, 1],
-  ]
+  return Array.from({ length: steps + 1 }, (_, i) => [
+    startOffset + ((1 - startOffset) * i) / steps,
+    from + direction * i,
+    1,
+  ])
 }
 
-// 다리 [x1, y1, x2, y2, 길 굵기] — 강을 건너는 큰길 구간
+// 한쪽이 무색(0)이면 투명 → 아주 연한 노랑(1등급) → 그 등급까지 차례로 번지게
+function stopsOf(from, to) {
+  if (from === 0) return [[0, 1, 0], ...rampOf(1, to, 0.3)]
+  if (to === 0)
+    return stopsOf(to, from)
+      .map(([offset, grade, opacity]) => [1 - offset, grade, opacity])
+      .reverse()
+  return rampOf(from, to)
+}
+
+// 다리 { 길 번호, 강 위 구간 y } — 그 길의 경로를 그대로 써서 난간이 길에 딱 붙게
 const BRIDGES = [
-  [257, 398, 259, 466, 16],
-  [475, 365, 496, 422, 12],
+  { road: 1, y1: 398, y2: 466 },
+  { road: 2, y1: 365, y2: 424 },
 ]
 
 // 핀 모양 (끝이 0,0), 말풍선 모양 (꼬리가 오른쪽 아래 핀 쪽을 가리킴)
@@ -296,6 +302,12 @@ function AuthIllustration({ className }) {
             <stop offset="0" stopColor="#d48446" />
             <stop offset="1" stopColor="var(--color-community)" />
           </linearGradient>
+          {/* 다리를 그릴 강 위 구간 */}
+          {BRIDGES.map(({ road, y1, y2 }) => (
+            <clipPath key={road} id={`auth-bridge-${road}`}>
+              <rect x="0" y={y1} width="600" height={y2 - y1 + 6} />
+            </clipPath>
+          ))}
           {/* 가장자리를 살짝 어둡게 해 깊이감 */}
           <radialGradient id="auth-vignette" cx="0.5" cy="0.45" r="0.75">
             <stop offset="0.6" stopColor="#1e3c2a" stopOpacity="0" />
@@ -383,29 +395,25 @@ function AuthIllustration({ className }) {
         />
 
         {/* 다리: 강물 위 그림자 → 난간 (길은 그 위에 그려짐) */}
-        <g fill="none" strokeLinecap="butt">
-          {BRIDGES.map(([x1, y1, x2, y2, width]) => (
-            <g key={`${x1}-${y1}`}>
+        {BRIDGES.map(({ road }) => {
+          const { points, width } = ROADS[road]
+          return (
+            <g key={road} fill="none" clipPath={`url(#auth-bridge-${road})`}>
               <path
-                d={pathOf([
-                  [x1 + 4, y1 + 5],
-                  [x2 + 4, y2 + 5],
-                ])}
+                d={pathOf(points)}
+                transform="translate(4 5)"
                 stroke="#1e3c2a"
                 strokeOpacity="0.22"
-                strokeWidth={width + 8}
+                strokeWidth={width + 6}
               />
               <path
-                d={pathOf([
-                  [x1, y1],
-                  [x2, y2],
-                ])}
+                d={pathOf(points)}
                 stroke="#8e9a8b"
-                strokeWidth={width + 8}
+                strokeWidth={width + 6}
               />
             </g>
-          ))}
-        </g>
+          )
+        })}
 
         {/* 길: 테두리 → 흰 길 */}
         <g fill="none" strokeLinecap="round" strokeLinejoin="round">
