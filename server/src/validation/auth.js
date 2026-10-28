@@ -1,3 +1,5 @@
+import { getSignupEmailError } from '../shared/signupEmail.js'
+
 // 회원가입·로그인 입력 규칙 — 프론트(src/api/authApi.js)와 같은 규칙을 서버에서도 검사
 export const PASSWORD_MIN = 8
 export const PASSWORD_MAX = 64
@@ -25,7 +27,8 @@ function validateEmail(email, errors) {
 // 오류 메시지 배열을 돌려준다.
 export function validateSignup({ email, nickname, password, agreed }) {
   const errors = []
-  validateEmail(email, errors)
+  const emailError = getSignupEmailError(email)
+  if (emailError) errors.push(emailError)
 
   const trimmedNickname = asText(nickname).trim()
   if (!trimmedNickname) errors.push('닉네임을 입력하세요.')
