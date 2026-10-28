@@ -42,9 +42,11 @@ export function validateNote(input, { today = getLocalToday() } = {}) {
     ['content', '상세 내용', CONTENT_MAX],
   ]) {
     if (typeof input[key] !== 'string' || !input[key].trim())
-      errors.push(`${label}을 입력하세요.`)
+      errors.push(`${label}${key === 'tag' ? '를' : '을'} 입력하세요.`)
     else if (input[key].trim().length > max)
-      errors.push(`${label}은 ${max}자 이하로 입력하세요.`)
+      errors.push(
+        `${label}${key === 'tag' ? '는' : '은'} ${max}자 이하로 입력하세요.`,
+      )
   }
   if (!validDate(input.observedDate))
     errors.push('관찰 날짜가 올바르지 않습니다.')

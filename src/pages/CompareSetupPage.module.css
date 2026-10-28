@@ -80,7 +80,6 @@
 }
 .button:focus-visible,
 .primary:focus-visible,
-.scenario select:focus-visible,
 .notice summary:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: var(--space-4);
@@ -109,17 +108,6 @@
 .footer p {
   color: var(--color-primary);
   font-size: var(--font-size-xs);
-}
-.scenario {
-  display: grid;
-  gap: var(--space-8);
-}
-.scenario select {
-  min-height: var(--touch-target);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-white);
-  padding: var(--space-8);
 }
 .modal {
   width: calc(100% - var(--space-48));
