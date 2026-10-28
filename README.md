@@ -189,3 +189,23 @@ function CompareSetupPage() {
 작업 브랜치와 PR에서는 검사만 수행하고, main 반영 후 검증한 프론트·API 파일을 EC2로 자동 배포한다.
 설정 변수, 배포 순서, 백업·복구 및 제한은 [배포 안내](deploy/README.md)를 참고한다.
 배포 스크립트 테스트: `node --test deploy/tests/*.test.mjs`.
+
+## 비교 계산식
+
+- `src/services/colorMetrics.js`: 집계된 1~10등급 픽셀 개수에서 계산하는 순수 함수. WMS 수신/픽셀 분류와 분리.
+- 색상 평균 지수 `S = 100 × Σ[(k−1)nₖ] / (9M)`, 8~10등급 비중 `Σ(n₈..n₁₀)/M × 100`.
+- 등급별 분포 `nₖ/M × 100`, 판별 성공 비율 `M/T × 100`, 후보 중 미분류 `U/(M+U) × 100`.
+- `M=Σnₖ`, `T=M+U+E`. U는 미분류, E는 미표시. 비율 반환 단위는 모두 0~100(%), 화면에서만 반올림.
+- M=0이면 점수·분포·높은 등급 비중은 null. T=0은 EMPTY_AREA, 잘못된 개수는 INVALID_DATA. 유효한 전부 1등급의 0점과 구분.
+- A−B 지수 및 높은 등급 비중 차이(%p), 미분류의 양 끝 배정에 따른 조건부 지수 범위를 제공. 신뢰구간/안전 순위가 아님.
+- 현재 비교 입력은 동일 조건의 가상 fixture이며 `synthetic: true`. 실제 지도 WMS와 계산 데이터는 별개. 실제 PNG 디코딩·색상 분류·지리적 마스크는 이번 변경에 포함하지 않음.
+- 반경은 기존 500m/1km 유지(지름 아님). 높은 등급 경계 8은 시험값. 실제 등급 방향·팔레트·해상도·기간·이용 조건 검증 후 실제 집계를 연결해야 함.
+
+```bash
+npm run test:compare
+npm run test:compare:browser  # Chrome 설치 필요. 다른 Playwright 브라우저 채널은 PLAYWRIGHT_CHANNEL로 지정
+npm run lint
+npm run build
+```
+
+브라우저 테스트는 지도 SDK 키/WMS를 비활성화한 fixture 모달 검증이다. 실제 지도/API 검증을 의미하지 않는다.
