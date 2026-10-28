@@ -22,32 +22,34 @@ const ROADS = [
   {
     width: 16,
     points: [
-      [-10, 198, 2],
+      [-10, 198, 0],
       [120, 202, 3],
       [250, 207, 5],
       [380, 211, 7],
       [480, 214, 4],
-      [610, 217, 2],
+      [610, 217, 0],
     ],
   },
   {
     width: 16,
     points: [
-      [244, -10, 1],
+      [244, -10, 0],
       [247, 100, 3],
       [250, 207, 6],
       [253, 300, 4],
       [256, 372, 2],
+      [260, 490, 0],
     ],
   },
   {
     width: 12,
     points: [
-      [372, -10, 2],
+      [372, -10, 0],
       [392, 90, 3],
       [420, 211, 6],
       [458, 318, 9],
-      [482, 372, 5],
+      [485, 393, 3],
+      [520, 490, 0],
     ],
   },
   // 골목
@@ -64,7 +66,7 @@ const ROADS = [
   {
     width: 8,
     points: [
-      [-10, 300, 2],
+      [-10, 300, 0],
       [130, 302, 3],
       [253, 300, 4],
       [360, 304, 6],
@@ -79,7 +81,7 @@ const ROADS = [
       [115, 98, 0],
       [120, 202, 1],
       [126, 302, 3],
-      [128, 372, 0],
+      [129, 384, 0],
     ],
   },
   {
@@ -89,7 +91,23 @@ const ROADS = [
       [526, 86, 0],
       [538, 214, 3],
       [552, 324, 5],
-      [558, 372, 3],
+      [559, 353, 0],
+    ],
+  },
+  // 강변길 (강을 따라)
+  {
+    width: 8,
+    points: [
+      [-10, 391, 0],
+      [60, 382, 0],
+      [128, 384, 0],
+      [200, 391, 0],
+      [258, 394, 0],
+      [330, 386, 0],
+      [420, 366, 1],
+      [490, 356, 2],
+      [558, 353, 0],
+      [610, 357, 0],
     ],
   },
   // 범죄주의구간이 모인 골목 (일부러 반듯하지 않게)
@@ -170,8 +188,8 @@ const BUILDINGS = [
   [520, 284, 24, 30],
   [24, 318, 80, 36],
   [272, 318, 70, 34],
-  [376, 330, 60, 30],
-  [570, 342, 30, 26],
+  [380, 326, 56, 22],
+  [568, 318, 30, 22],
 ]
 
 // 건물 지붕 색 (높낮이 차이처럼 보이게 돌아가며 사용)
@@ -179,8 +197,8 @@ const BUILDING_TONES = ['#f4f2ea', '#e9e6dc', '#efeee6', '#e2e3d9']
 
 // 안심노트 핀 위치 (핀 끝이 가리키는 점)
 const NOTE_PINS = [
-  [178, 166],
-  [334, 264],
+  [456, 150],
+  [300, 301],
 ]
 
 // 길 하나를 지점별 구간으로 나눔
@@ -193,9 +211,36 @@ function segmentsOf(road, roadIndex) {
 
 const SEGMENTS = ROADS.flatMap((road, i) =>
   segmentsOf(road, i)
-    .filter(({ start, end }) => start[2] > 0 && end[2] > 0)
+    .filter(({ start, end }) => start[2] > 0 || end[2] > 0)
     .map((segment) => ({ ...segment, width: road.width })),
 )
+
+// 구간 색 단계 [위치, 등급, 불투명도]
+// 한쪽이 무색(0)이면 투명 → 아주 연한 노랑(1등급) → 그 등급 색으로 천천히 번지게
+function stopsOf(from, to) {
+  if (from === 0)
+    return [
+      [0, 1, 0],
+      [0.45, 1, 0.9],
+      [1, to, 1],
+    ]
+  if (to === 0)
+    return [
+      [0, from, 1],
+      [0.55, 1, 0.9],
+      [1, 1, 0],
+    ]
+  return [
+    [0, from, 1],
+    [1, to, 1],
+  ]
+}
+
+// 다리 [x1, y1, x2, y2, 길 굵기] — 강을 건너는 큰길 구간
+const BRIDGES = [
+  [257, 398, 259, 466, 16],
+  [475, 365, 496, 422, 12],
+]
 
 const pathOf = (points) =>
   points.map(([x, y], i) => `${i ? 'L' : 'M'}${x} ${y}`).join('')
@@ -223,8 +268,14 @@ function AuthIllustration({ className }) {
               x2={end[0]}
               y2={end[1]}
             >
-              <stop offset="0" stopColor={GRADE_COLORS[start[2] - 1]} />
-              <stop offset="1" stopColor={GRADE_COLORS[end[2] - 1]} />
+              {stopsOf(start[2], end[2]).map(([offset, grade, opacity]) => (
+                <stop
+                  key={offset}
+                  offset={offset}
+                  stopColor={GRADE_COLORS[grade - 1]}
+                  stopOpacity={opacity}
+                />
+              ))}
             </linearGradient>
           ))}
           <linearGradient id="auth-river" x1="0" y1="0" x2="0" y2="1">
@@ -328,6 +379,31 @@ function AuthIllustration({ className }) {
           opacity="0.6"
         />
 
+        {/* 다리: 강물 위 그림자 → 난간 (길은 그 위에 그려짐) */}
+        <g fill="none" strokeLinecap="butt">
+          {BRIDGES.map(([x1, y1, x2, y2, width]) => (
+            <g key={`${x1}-${y1}`}>
+              <path
+                d={pathOf([
+                  [x1 + 4, y1 + 5],
+                  [x2 + 4, y2 + 5],
+                ])}
+                stroke="#1e3c2a"
+                strokeOpacity="0.22"
+                strokeWidth={width + 8}
+              />
+              <path
+                d={pathOf([
+                  [x1, y1],
+                  [x2, y2],
+                ])}
+                stroke="#8e9a8b"
+                strokeWidth={width + 8}
+              />
+            </g>
+          ))}
+        </g>
+
         {/* 길: 테두리 → 흰 길 */}
         <g fill="none" strokeLinecap="round" strokeLinejoin="round">
           {ROADS.map((road) => (
@@ -370,9 +446,9 @@ function AuthIllustration({ className }) {
 
         {/* 고른 지점(A)과 반경 */}
         <circle
-          cx="250"
-          cy="207"
-          r="95"
+          cx="128"
+          cy="202"
+          r="82"
           fill="var(--color-primary)"
           fillOpacity="0.1"
           stroke="var(--color-primary)"
@@ -380,8 +456,8 @@ function AuthIllustration({ className }) {
           strokeWidth="2.5"
         />
         <circle
-          cx="250"
-          cy="207"
+          cx="128"
+          cy="202"
           r="17"
           fill="var(--color-primary)"
           stroke="var(--color-white)"
@@ -405,7 +481,7 @@ function AuthIllustration({ className }) {
         ))}
 
         {/* 메모 말풍선 */}
-        <g transform="translate(352 152)" filter="url(#auth-shadow)">
+        <g transform="translate(450 18)" filter="url(#auth-shadow)">
           <path
             d="M0 0h120a10 10 0 0 1 10 10v44a10 10 0 0 1-10 10H34l-14 14V64H10A10 10 0 0 1 0 54V10A10 10 0 0 1 10 0z"
             fill="var(--color-white)"
