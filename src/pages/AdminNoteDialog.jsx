@@ -82,13 +82,12 @@ function AdminNoteDialog({ note, onClose, onProcessed }) {
       <h3 className={styles.noteTitle}>{note.title}</h3>
       <dl className={styles.metadata}>
         <div>
-          <dt>작성자</dt>
-          <dd>
-            {note.authorName ||
-              (note.authorId != null
-                ? `회원 #${note.authorId}`
-                : '작성자 정보 없음')}
-          </dd>
+          <dt>작성자 이메일</dt>
+          <dd>{note.authorEmail || '정보 없음'}</dd>
+        </div>
+        <div>
+          <dt>작성자 닉네임</dt>
+          <dd>{note.authorNickname || '정보 없음'}</dd>
         </div>
         <div>
           <dt>태그</dt>

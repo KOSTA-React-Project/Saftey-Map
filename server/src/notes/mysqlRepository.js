@@ -1,9 +1,9 @@
 // 화면의 camelCase와 DB의 snake_case 변환은 이 파일에서만 처리한다.
-const columns = `CAST(id AS CHAR) AS id,
-  author_id AS authorId, title, content, tag,
-  DATE_FORMAT(observed_date, '%Y-%m-%d') AS observedDate,
-  location_name AS locationName, latitude, longitude, status,
-  moderation_reason AS moderationReason, created_at AS createdAt, updated_at AS updatedAt`
+const columns = `CAST(notes.id AS CHAR) AS id,
+  notes.author_id AS authorId, notes.title, notes.content, notes.tag,
+  DATE_FORMAT(notes.observed_date, '%Y-%m-%d') AS observedDate,
+  notes.location_name AS locationName, notes.latitude, notes.longitude, notes.status,
+  notes.moderation_reason AS moderationReason, notes.created_at AS createdAt, notes.updated_at AS updatedAt`
 
 export function createMysqlNotes(pool) {
   return {
@@ -66,8 +66,9 @@ export function createMysqlNotes(pool) {
       const currentPage = Math.min(page, totalPages)
       // 검증된 정수도 바인딩하며, LIMIT은 mysql2 query의 숫자 이스케이프를 사용한다.
       const [items] = await pool.query(
-        `SELECT ${columns} FROM notes ${where}
-         ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`,
+        `SELECT ${columns}, users.email AS authorEmail, users.nickname AS authorNickname
+         FROM notes LEFT JOIN users ON users.id = notes.author_id ${where}
+         ORDER BY notes.created_at DESC, notes.id DESC LIMIT ? OFFSET ?`,
         [...values, pageSize, (currentPage - 1) * pageSize],
       )
       const [groups] = await pool.execute(

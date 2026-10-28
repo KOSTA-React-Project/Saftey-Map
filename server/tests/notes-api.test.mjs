@@ -353,7 +353,7 @@ test('MySQL 목록 SQL은 검색값을 바인딩하고 LIMIT/OFFSET으로 조회
   const select = calls.find((call) => call.sql.includes('LIMIT'))
   assert.match(
     select.sql,
-    /ORDER BY created_at DESC, id DESC LIMIT \? OFFSET \?/,
+    /ORDER BY notes\.created_at DESC, notes\.id DESC LIMIT \? OFFSET \?/,
   )
   assert.equal(select.sql.includes(keyword), false)
   assert.deepEqual(select.values, [

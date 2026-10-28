@@ -82,12 +82,6 @@ function CompareResultModal({ result, crimeType, onClose }) {
           지점·반경 다시 선택 / 닫기
         </button>
       </div>
-      {result.synthetic === false && (
-        <p role="status">
-          실제 WMS 원본 분석 · {result.conditions.radius}m · 조회{' '}
-          {result.queriedAt} · 기준 기간 {result.source?.period}
-        </p>
-      )}
       <p>점수가 높을수록 범죄 주의 단계가 높습니다.</p>
       <div className={styles.tabs} role="tablist" aria-label="비교 지점 전환">
         {['A', 'B'].map((slot) => (
