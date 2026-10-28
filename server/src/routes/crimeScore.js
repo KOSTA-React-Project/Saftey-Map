@@ -53,6 +53,8 @@ export async function analyzePoint(
     byCrimeType[type.id] = countPixels(body, geometry.size, mask, palette)
     await new Promise((resolve) => setTimeout(resolve, 0))
   }
+  // 마지막 대기 중에 취소(연결 끊김·시간 초과)됐으면 결과를 돌려주지 않음
+  signal.throwIfAborted()
   return {
     conditions,
     result: { ...byCrimeType.TOT, byCrimeType, geometry },

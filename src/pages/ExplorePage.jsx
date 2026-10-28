@@ -33,6 +33,9 @@ function ExplorePage() {
   const [radius, setRadius] = useState(500)
   // '이 위치로 분석하기'를 누르면 왼쪽 패널이 분석 결과로 바뀜
   const [scoreOpen, setScoreOpen] = useState(false)
+  // 안심노트가 열리면(마커 클릭·뒤로가기 모두) 지점 분석 패널은 닫음
+  // — 노트를 닫고 돌아올 때 자동으로 다시 분석하지 않게
+  if (noteSpots.isOpen && scoreOpen) setScoreOpen(false)
   const navigate = useNavigate()
 
   // 검색한 곳으로 지도를 옮기고 중심도 그곳으로
@@ -183,14 +186,7 @@ function ExplorePage() {
           </>
         )}
       </Sidebar>
-      {/* 노트를 열면 지점 분석 패널은 닫음 (돌아올 때 자동으로 다시 분석하지 않게) */}
-      <NoteSpotMarkers
-        spots={noteSpots.spots}
-        onSelect={(...args) => {
-          setScoreOpen(false)
-          noteSpots.openSpot(...args)
-        }}
-      />
+      <NoteSpotMarkers spots={noteSpots.spots} onSelect={noteSpots.openSpot} />
       <MapMarker
         type="A"
         position={pointA}
