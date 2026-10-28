@@ -52,6 +52,9 @@ jobs:
       - name: API 테스트
         run: npm run test:api
 
+      - name: 비교 계산식 테스트
+        run: npm run test:compare
+
       - name: 배포 스크립트 검사
         run: |
           bash -n deploy/package-release.sh

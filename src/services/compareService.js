@@ -1,25 +1,7 @@
 import { isValidPosition } from '../utils/compareState.js'
 
-export function summarizeCounts(counts, unclassified, unpainted) {
-  const valid = counts.reduce((sum, count) => sum + count, 0)
-  const total = valid + unclassified + unpainted
-  if (!valid) return { score: null, status: 'NO_DATA' }
-  return {
-    status: 'OK',
-    counts,
-    valid,
-    total,
-    unclassified,
-    unpainted,
-    distribution: counts.map((count) => (count / valid) * 100),
-    score:
-      counts.reduce(
-        (sum, count, index) => sum + ((count * index) / 9) * 100,
-        0,
-      ) / valid,
-    displayRatio: (valid / total) * 100,
-  }
-}
+export { summarizeCounts } from './colorMetrics.js'
+import { summarizeCounts, compareMetrics } from './colorMetrics.js'
 
 function fixtureFor(point, radius) {
   const seed =
@@ -67,11 +49,15 @@ export async function comparePlaces(
     )
   if (scenario === 'empty')
     throw new Error('분석할 예시 데이터가 없습니다. 결과는 제공하지 않습니다.')
+  const A = fixtureFor(snapshot.A, snapshot.radius)
+  const B = fixtureFor(snapshot.B, snapshot.radius)
   return {
     conditions: snapshot,
-    A: fixtureFor(snapshot.A, snapshot.radius),
-    B: fixtureFor(snapshot.B, snapshot.radius),
+    A,
+    B,
+    comparison: compareMetrics(A, B),
+    synthetic: true,
     queriedAt: new Date().toISOString(),
-    version: 'demo-v1',
+    version: 'demo-color-metrics-v2',
   }
 }
