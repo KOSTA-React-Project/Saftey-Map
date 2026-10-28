@@ -86,8 +86,28 @@
   background: var(--color-surface);
 }
 
+/* 좁은 화면: 입력창·버튼만 보이게 */
 @media (max-width: 1199px) {
   .input {
     font-size: var(--font-size-md);
+  }
+
+  .title,
+  .description {
+    display: none;
+  }
+
+  .form {
+    margin-top: 0;
+  }
+
+  /* 라벨은 스크린리더용으로만 남김 */
+  .fieldLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }
