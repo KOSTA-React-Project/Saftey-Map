@@ -57,7 +57,9 @@ function Header() {
         aria-label={menuOpen ? '계정 메뉴 닫기' : '계정 메뉴 열기'}
         onClick={() => setMenuOpen((value) => !value)}
       >
-        ☰
+        <svg className={styles.menuIcon} viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M3 5h14M3 10h14M3 15h14" />
+        </svg>
       </button>
       <div
         id={menuId}
