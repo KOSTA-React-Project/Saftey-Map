@@ -1,0 +1,20 @@
+/* 제목·안내·결과 카드 사이를 일정하게 띄움 */
+.panel {
+  display: grid;
+  gap: var(--space-16);
+}
+
+.intro {
+  display: grid;
+  gap: var(--space-8);
+}
+
+.result {
+  display: grid;
+  gap: var(--space-16);
+}
+
+/* 위치가 바뀌었거나 다시 분석하는 동안 이전 결과를 흐리게 */
+.dimmed {
+  opacity: 0.5;
+}

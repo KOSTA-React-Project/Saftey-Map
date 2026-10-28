@@ -6,6 +6,7 @@ import CrimeLayer from '../map/CrimeLayer.jsx'
 import { CRIME_TYPES } from '../../constants/crimeTypes.js'
 import { scorePlace } from '../../services/pointScoreService.js'
 import panel from '../notes/NoteSpotPanel.module.css'
+import own from './PointScorePanel.module.css'
 // 두 지역 비교 결과와 같은 모양으로 보이도록 비교 화면 스타일을 그대로 씀
 import styles from '../../pages/CompareSetupPage.module.css'
 
@@ -96,15 +97,17 @@ function PointScorePanel({ point, address, radius, crimeType, onBack }) {
   const showResult = Boolean(data) && state.status !== 'error'
 
   return (
-    <section aria-label="선택한 지점 분석 결과">
+    <section aria-label="선택한 지점 분석 결과" className={own.panel}>
       <div className={panel.head}>
         <button type="button" className={panel.back} onClick={onBack}>
           ← 돌아가기
         </button>
       </div>
-      <p className={styles.eyebrow}>EXPLORE · 지점 분석 결과</p>
-      <h2>선택한 동네를 같은 반경으로</h2>
-      <p>점수가 높을수록 범죄 주의 단계가 높습니다.</p>
+      <div className={own.intro}>
+        <p className={styles.eyebrow}>EXPLORE · 지점 분석 결과</p>
+        <h2>선택한 동네를 같은 반경으로</h2>
+        <p>점수가 높을수록 범죄 주의 단계가 높습니다.</p>
+      </div>
 
       {changed && (
         <div className={styles.notice} role="status">
@@ -132,9 +135,7 @@ function PointScorePanel({ point, address, radius, crimeType, onBack }) {
 
       {showResult && (
         <div
-          style={{
-            opacity: changed || state.status === 'loading' ? 0.5 : 1,
-          }}
+          className={`${own.result} ${changed || state.status === 'loading' ? own.dimmed : ''}`}
         >
           <section aria-label="지점 분석 결과" className={styles.resultCard}>
             <h3>선택한 지점 주변</h3>
