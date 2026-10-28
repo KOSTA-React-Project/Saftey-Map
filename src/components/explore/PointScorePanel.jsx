@@ -43,6 +43,9 @@ function ResultMap({ point, radius, crimeType }) {
   )
 }
 
+// 서버 설정이 필요한 오류 — 다시 시도해도 결과가 같음
+const SETUP_ERRORS = ['ANALYSIS_NOT_VERIFIED', 'SOURCE_NOT_CONFIGURED']
+
 function formatNumber(value, suffix = '') {
   return Number.isFinite(value) ? `${value.toFixed(1)}${suffix}` : '분석 불가'
 }
@@ -70,6 +73,7 @@ function PointScorePanel({ point, address, radius, crimeType, onBack }) {
           }
           setState((prev) => ({
             ...prev,
+            code: error.code,
             status: 'error',
             message: error.message,
           }))
@@ -128,9 +132,19 @@ function PointScorePanel({ point, address, radius, crimeType, onBack }) {
         </p>
       )}
       {state.status === 'error' && (
-        <p className={styles.notice} role="alert">
-          {state.message}
-        </p>
+        <div className={styles.notice} role="alert">
+          <p>{state.message}</p>
+          {/* 서버 설정이 꺼진 경우는 다시 시도해도 같으므로 버튼을 보여 주지 않음 */}
+          {!SETUP_ERRORS.includes(state.code) && (
+            <button
+              type="button"
+              className={own.retry}
+              onClick={analyzeChanged}
+            >
+              다시 시도
+            </button>
+          )}
+        </div>
       )}
 
       {showResult && (
