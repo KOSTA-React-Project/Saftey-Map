@@ -214,6 +214,8 @@ test('390px·태블릿·1440px: 패널/메뉴/입력/비교 모달/관리자 카
     exact: true,
   })
   await compare.waitFor()
+  assert.equal(await page.getByRole('combobox').count(), 0)
+  assert.doesNotMatch(await page.locator('aside').innerText(), /예시|fixture|실패 재현|느린 응답/)
   await page.screenshot({ path: '/tmp/ansim-responsive-setup.png' })
   await compare.click().catch(async (error) => {
     throw new Error(
@@ -226,7 +228,7 @@ test('390px·태블릿·1440px: 패널/메뉴/입력/비교 모달/관리자 카
   assert.equal(Math.round(bounds.width), 390)
   await page.getByRole('tab', { name: 'B 지역' }).click()
   assert.equal(
-    await page.getByRole('region', { name: 'B 지역 예시 결과' }).isVisible(),
+    await page.getByRole('region', { name: 'B 지역 지도' }).isVisible(),
     true,
   )
   await page.screenshot({ path: '/tmp/ansim-responsive-compare.png' })

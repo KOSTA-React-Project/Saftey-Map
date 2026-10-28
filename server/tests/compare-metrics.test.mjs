@@ -4,7 +4,6 @@ import {
   summarizeCounts,
   compareMetrics,
 } from '../../src/services/colorMetrics.js'
-import { CRIME_TYPES } from '../../src/constants/crimeTypes.js'
 import { comparePlaces } from '../../src/services/compareService.js'
 import {
   compareReducer,
@@ -142,23 +141,20 @@ test('입력 배열을 나중에 변경해도 계산 결과의 집계는 유지�
   assert.equal(result.counts[0], 1)
 })
 
-test('비교 서비스가 예시 출처·공통 반경·차이·버전을 함께 반환한다', async () => {
-  const result = await comparePlaces(conditions)
-  assert.equal(result.synthetic, true)
-  assert.equal(result.conditions.radius, 1000)
-  assert.equal(
-    result.comparison.scoreDifference,
-    result.A.score - result.B.score,
-  )
-  assert.equal(result.A.version, result.B.version)
-  await assert.rejects(comparePlaces({ ...conditions, radius: 250 }))
+test('비교 서비스는 지점·반경만 복사하고 가상 점수를 생성하지 않는다', async () => {
+  const input = structuredClone(conditions)
+  const result = await comparePlaces(input)
+  assert.deepEqual(result, { conditions })
+  input.A.lat = 0
+  assert.equal(result.conditions.A.lat, point.lat)
+  for (const invalid of [null, {}, { ...conditions, radius: 250 }])
+    await assert.rejects(comparePlaces(invalid))
   const controller = new AbortController()
-  const pending = comparePlaces(conditions, {
-    signal: controller.signal,
-    scenario: 'slow',
-  })
   controller.abort()
-  await assert.rejects(pending, { name: 'AbortError' })
+  await assert.rejects(
+    comparePlaces(conditions, { signal: controller.signal }),
+    { name: 'AbortError' },
+  )
 })
 
 test('지점·반경 변경 시 결과 무효화하고 늦은 이전 결과를 거절한다', () => {
@@ -196,27 +192,4 @@ test('지점·반경 변경 시 결과 무효화하고 늦은 이전 결과를 �
   assert.equal(state.result.version, 'new')
   state = compareReducer(state, { type: 'select', position: point })
   assert.equal(state.result, null)
-})
-
-test('범죄 유형별 점수는 등급 비율을 바꿔 붙이지 않고 각 유형 집계에 산식을 적용한다', async () => {
-  const result = await comparePlaces(conditions)
-  for (const slot of ['A', 'B']) {
-    const byType = result[slot].byCrimeType
-    assert.deepEqual(
-      Object.keys(byType),
-      CRIME_TYPES.map(({ id }) => id),
-    )
-    assert.equal(result[slot].score, byType.TOT.score)
-    assert.notDeepEqual(byType.BRGLR.counts, byType.RAPE.counts)
-    for (const { id } of CRIME_TYPES) {
-      const metrics = byType[id]
-      const calculated = summarizeCounts(
-        metrics.counts,
-        metrics.unclassified,
-        metrics.unpainted,
-      )
-      assert.equal(metrics.score, calculated.score)
-      assert.ok(metrics.score >= 0 && metrics.score <= 100)
-    }
-  }
 })

@@ -133,14 +133,7 @@ function AdminPage() {
             </h1>
             <p>이웃의 관찰 기록이 공개되기 전, 내용을 확인해 주세요.</p>
           </div>
-          <span className={styles.badge}>
-            {data.status === 'ready' ? '서버 목록 조회 완료' : '서버 API 사용'}
-          </span>
         </div>
-        <p className={styles.notice}>
-          목록 조회와 게시 처리는 서버 API를 사용합니다. 서버가 관리자 권한을
-          확인한 요청만 처리합니다.
-        </p>
         {!canRequest ? (
           <section
             className={styles.panel}
@@ -252,12 +245,7 @@ function AdminPage() {
                       : '목록을 불러오지 못했습니다.'}
                 </h2>
                 <p>{data.error}</p>
-                {authError && (
-                  <p>
-                    로그인·권한 연결 후 다시 확인해 주세요. 예시 데이터로
-                    대체하지 않습니다.
-                  </p>
-                )}
+                {authError && <p>관리자 계정으로 다시 로그인해 주세요.</p>}
                 <button
                   type="button"
                   className={styles.button}

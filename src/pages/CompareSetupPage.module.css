@@ -16,15 +16,7 @@
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
 }
-.badge {
-  display: inline-block;
-  align-self: start;
-  padding: var(--space-4) var(--space-12);
-  border-radius: var(--radius-sm);
-  background: var(--color-primary-soft);
-  color: var(--color-primary);
-  font-size: var(--font-size-xs);
-}
+
 .section {
   border: 0;
   border-top: 1px solid var(--color-border);
@@ -79,9 +71,7 @@
   cursor: not-allowed;
 }
 .button:focus-visible,
-.primary:focus-visible,
-.scenario select:focus-visible,
-.notice summary:focus-visible {
+.primary:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: var(--space-4);
 }
@@ -109,17 +99,6 @@
 .footer p {
   color: var(--color-primary);
   font-size: var(--font-size-xs);
-}
-.scenario {
-  display: grid;
-  gap: var(--space-8);
-}
-.scenario select {
-  min-height: var(--touch-target);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-white);
-  padding: var(--space-8);
 }
 .modal {
   width: calc(100% - var(--space-48));
@@ -175,38 +154,6 @@
 .resultMapCanvas {
   height: 100%;
 }
-.resultCard .score {
-  color: var(--color-text);
-  font-size: var(--font-size-3xl);
-  font-weight: var(--font-weight-bold);
-}
-.score small {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-regular);
-}
-.distribution {
-  display: flex;
-  height: var(--space-24);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-}
-.gradeList {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: var(--space-8);
-  font-size: var(--font-size-xs);
-}
-.gradeList strong {
-  display: block;
-}
-.metric {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-8);
-  border-top: 1px solid var(--color-border);
-  padding-top: var(--space-16);
-  font-size: var(--font-size-sm);
-}
 .tabs {
   display: none;
 }
@@ -236,9 +183,6 @@
   }
   .inactive {
     display: none;
-  }
-  .gradeList {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 }
 
@@ -282,9 +226,6 @@
   .resultCard {
     padding: var(--space-12);
   }
-  .metric {
-    flex-wrap: wrap;
-  }
 }
 
 @media (max-width: 1199px) {
@@ -302,58 +243,5 @@
   }
   .point {
     margin-top: var(--space-8);
-  }
-}
-
-.typeDescription {
-  margin-top: var(--space-8);
-  font-size: var(--font-size-xs);
-  color: var(--color-secondary);
-  line-height: 1.8;
-}
-.typeScores {
-  display: grid;
-  gap: var(--space-12);
-  margin: var(--space-12) 0 0;
-}
-.typeScores > div {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: var(--space-8);
-  padding-bottom: var(--space-12);
-  border-bottom: 1px solid var(--color-border);
-}
-.typeScores dd {
-  margin: 0;
-  font-variant-numeric: tabular-nums;
-}
-.typeScores small {
-  color: var(--color-secondary);
-}
-.analysisDetails {
-  display: grid;
-  gap: var(--space-24);
-  margin-top: var(--space-16);
-}
-.analysisDetails h3,
-.analysisDetails h4 {
-  margin-bottom: var(--space-8);
-}
-.analysisDetails p + p {
-  margin-top: var(--space-8);
-}
-.detailsGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-24);
-}
-.detailsGrid > section {
-  min-width: 0;
-}
-@media (max-width: 767px) {
-  .detailsGrid {
-    grid-template-columns: minmax(0, 1fr);
   }
 }

@@ -87,7 +87,7 @@ function AdminNoteDialog({ note, onClose, onProcessed }) {
             {note.authorName ||
               (note.authorId != null
                 ? `회원 #${note.authorId}`
-                : '작성자 정보 미연결')}
+                : '작성자 정보 없음')}
           </dd>
         </div>
         <div>
