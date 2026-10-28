@@ -214,7 +214,7 @@ const BUILDING_TONES = ['#f4f2ea', '#e9e6dc', '#efeee6', '#e2e3d9']
 // 안심노트 핀 위치 (핀 끝이 가리키는 점)
 const NOTE_PINS = [
   [480, 214],
-  [300, 301],
+  [300, 302],
 ]
 
 // 길 하나를 지점별 구간으로 나눔
@@ -493,7 +493,7 @@ function AuthIllustration({ className }) {
         {/* 안심노트 핀 마커: 바닥 그림자 + 핀 */}
         {NOTE_PINS.map(([x, y]) => (
           <g key={`${x}-${y}`} transform={`translate(${x} ${y})`}>
-            <ellipse cy="2" rx="9" ry="3.5" fill="#1e3c2a" opacity="0.2" />
+            <ellipse rx="6" ry="2" fill="#1e3c2a" opacity="0.22" />
             <path
               d={PIN_PATH}
               transform="translate(3 3)"
