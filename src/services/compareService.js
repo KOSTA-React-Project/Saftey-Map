@@ -1,17 +1,30 @@
+import { CRIME_TYPES } from '../constants/crimeTypes.js'
 import { isValidPosition } from '../utils/compareState.js'
 
 export { summarizeCounts } from './colorMetrics.js'
 import { summarizeCounts, compareMetrics } from './colorMetrics.js'
 
-function fixtureFor(point, radius) {
+function fixtureFor(point, radius, typeIndex = 0) {
   const seed =
     Math.abs(Math.round(point.lat * 1000) + Math.round(point.lng * 1000)) +
-    radius / 500
+    radius / 500 +
+    typeIndex * 17
   return summarizeCounts(
     Array.from({ length: 10 }, (_, i) => 5 + ((seed + i * 3) % 13)),
     12,
     28,
   )
+}
+
+function fixturesByCrimeType(point, radius) {
+  const byCrimeType = Object.fromEntries(
+    CRIME_TYPES.map((type, index) => [
+      type.id,
+      fixtureFor(point, radius, index),
+    ]),
+  )
+  // 전체 레이어는 개별 유형 점수의 합/평균이 아니라 별도 집계다.
+  return { ...byCrimeType.TOT, byCrimeType }
 }
 
 export async function comparePlaces(
@@ -49,8 +62,8 @@ export async function comparePlaces(
     )
   if (scenario === 'empty')
     throw new Error('분석할 예시 데이터가 없습니다. 결과는 제공하지 않습니다.')
-  const A = fixtureFor(snapshot.A, snapshot.radius)
-  const B = fixtureFor(snapshot.B, snapshot.radius)
+  const A = fixturesByCrimeType(snapshot.A, snapshot.radius)
+  const B = fixturesByCrimeType(snapshot.B, snapshot.radius)
   return {
     conditions: snapshot,
     A,
@@ -58,6 +71,6 @@ export async function comparePlaces(
     comparison: compareMetrics(A, B),
     synthetic: true,
     queriedAt: new Date().toISOString(),
-    version: 'demo-color-metrics-v2',
+    version: 'demo-crime-types-v3',
   }
 }

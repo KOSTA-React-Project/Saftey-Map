@@ -142,7 +142,12 @@ function NoteComposePage() {
       </header>
 
       <div className={styles.layout}>
-        <form className={styles.form} onSubmit={handleSubmit} noValidate>
+        <form
+          id="note-compose-form"
+          className={styles.form}
+          onSubmit={handleSubmit}
+          noValidate
+        >
           <label className={styles.field}>
             <span className={styles.fieldLabel}>
               제목 * · 최대 {TITLE_MAX}자
@@ -183,6 +188,9 @@ function NoteComposePage() {
           <div className={styles.field}>
             <span className={styles.fieldLabel}>위치 *</span>
             <PlaceSearchBox {...searchBoxProps} selectFirst />
+            <a className={styles.mapJump} href="#note-location-map">
+              지도에서 위치 고르기 ↓
+            </a>
             <span className={styles.hint}>
               지도를 눌러도 위치를 정할 수 있어요.
             </span>
@@ -248,7 +256,10 @@ function NoteComposePage() {
           </div>
         </form>
 
-        <div className={styles.side}>
+        <div className={styles.side} id="note-location-map">
+          <a className={styles.mapJump} href="#note-compose-form">
+            위치 선택 후 입력 폼으로 돌아가기 ↑
+          </a>
           <MapView className={styles.map} onClick={pickFromMap}>
             {approvedNotes.map((note) => (
               <MapMarker

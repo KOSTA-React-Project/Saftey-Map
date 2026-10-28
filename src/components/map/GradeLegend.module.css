@@ -62,3 +62,29 @@
   background: var(--color-surface);
   border-radius: var(--radius-sm);
 }
+
+@media (max-width: 1199px) {
+  .legend {
+    width: min(60%, 256px);
+    padding: var(--space-8);
+    left: var(--space-8);
+  }
+  .title {
+    font-size: var(--font-size-xs);
+  }
+  .bar {
+    margin-top: var(--space-4);
+  }
+  .source {
+    margin-top: var(--space-4);
+  }
+}
+@media (max-width: 1199px) and (max-height: 600px) {
+  .legend {
+    bottom: var(--space-24);
+  }
+  .labels,
+  .notice {
+    display: none;
+  }
+}

@@ -3,6 +3,7 @@ import MapView from '../components/map/MapView.jsx'
 import MapMarker from '../components/map/MapMarker.jsx'
 import MapRadius from '../components/map/MapRadius.jsx'
 import CrimeLayer from '../components/map/CrimeLayer.jsx'
+import { CRIME_TYPES } from '../constants/crimeTypes.js'
 import styles from './CompareSetupPage.module.css'
 
 // 탭에 가려진 지도가 다시 보이거나 화면 크기가 바뀌어도 선택 지점을 중앙에 유지한다.
@@ -71,10 +72,6 @@ function CompareResultModal({ result, crimeType, onClose }) {
         <div>
           <p className={styles.eyebrow}>COMPARE / 02 · 예시 결과</p>
           <h2 id="compare-result-title">두 동네를 같은 반경으로 나란히</h2>
-          <p>
-            동일 반경 {result.conditions.radius}m · 동일 지도 축척 ·
-            생활안전지도 WMS 중첩 · 아래 분석 수치는 별도 예시
-          </p>
         </div>
         <button
           type="button"
@@ -138,60 +135,36 @@ function CompareResultModal({ result, crimeType, onClose }) {
                 slot={slot}
                 crimeType={crimeType}
               />
-              <span className={styles.badge}>색상 평균 지수 · 예시</span>
+              <span className={styles.badge}>범죄 주의 단계 점수</span>
               <p className={styles.score}>
                 {formatNumber(data.score)}
                 {data.score != null && <small> / 100</small>}
               </p>
-              <p>공식 안전등급·범죄 발생 확률이 아닙니다.</p>
-              <div className={styles.metric}>
-                <span>8~10등급 색상 비중 · 예시</span>
-                <strong>{formatNumber(data.highGradeRatio, '%')}</strong>
-              </div>
-              <p>판별된 픽셀 기준 · 8등급 경계는 자체 시험 기준입니다.</p>
               {data.status !== 'OK' && (
                 <p role="status">
                   판별된 자료가 없어 지수를 제공하지 않습니다.
                 </p>
               )}
-              <h4>판별된 등급 픽셀 내 분포 · 예시</h4>
-              <div
-                className={styles.distribution}
-                aria-label="가상 1~10등급 분포"
-              >
-                {(data.distribution ?? []).map((value, index) => (
-                  <span
-                    key={index}
-                    style={{
-                      width: `${value}%`,
-                      background: `var(--color-grade-${index + 1})`,
-                    }}
-                  />
-                ))}
-              </div>
-              <ol className={styles.gradeList}>
-                {(data.distribution ?? []).map((value, index) => (
-                  <li key={index}>
-                    {index + 1}등급 <strong>{value.toFixed(1)}%</strong>
-                  </li>
-                ))}
-              </ol>
-              <div className={styles.metric}>
-                <span>판별 성공 비율 · 예시</span>
-                <strong>{formatNumber(data.displayRatio, '%')}</strong>
-              </div>
-              <div className={styles.metric}>
-                <span>후보 중 미분류 비율 · 예시</span>
-                <strong>{formatNumber(data.unclassifiedRatio, '%')}</strong>
-              </div>
-              <p>
-                판별 성공 비율의 분모는 전체 픽셀, 미분류 비율의 분모는 판별
-                성공 + 미분류 픽셀입니다.
-              </p>
-              <p>
-                유효 {data.valid} / 전체 {data.total} 가상 픽셀 · 미분류{' '}
-                {data.unclassified} · 미표시 {data.unpainted}
-              </p>
+              <section aria-label={`${slot} 범죄 유형별 점수`}>
+                <h4>범죄 유형별 점수 · 예시</h4>
+                <dl className={styles.typeScores}>
+                  {CRIME_TYPES.filter(({ id }) => id !== 'TOT').map(
+                    ({ id, label }) => (
+                      <div key={id}>
+                        <dt>{label}</dt>
+                        <dd>
+                          <strong>
+                            {formatNumber(data.byCrimeType?.[id]?.score)}
+                          </strong>
+                          {data.byCrimeType?.[id]?.score != null && (
+                            <small> / 100</small>
+                          )}
+                        </dd>
+                      </div>
+                    ),
+                  )}
+                </dl>
+              </section>
               <p>
                 미표시 영역은 안전 지역으로 해석하지 않습니다. 주민 메모는
                 지수에 반영하지 않습니다.
@@ -200,58 +173,110 @@ function CompareResultModal({ result, crimeType, onClose }) {
           )
         })}
       </div>
-      <section className={styles.notice} aria-label="A/B 예시 지수 차이">
-        <h3>A/B 차이 · 예시</h3>
-        <p>
-          A − B 색상 평균 지수:{' '}
-          {formatNumber(result.comparison?.scoreDifference)}
-        </p>
-        <p>
-          A − B 8~10등급 색상 비중:{' '}
-          {formatNumber(result.comparison?.highGradeDifference, '%p')}
-        </p>
-        <p>
-          양수는 A가 높고, 음수는 B가 높습니다. 실제 안전 우열을 뜻하지
-          않습니다.
-        </p>
-        {result.comparison?.directionMayChange && (
-          <p>미분류 색상의 배정에 따라 지수 차이 방향이 바뀔 수 있습니다.</p>
-        )}
-      </section>
       <details className={styles.notice}>
         <summary>산식·분석 기준 확인</summary>
-        <p>
-          색상 평균 지수 S = 100 × Σ[(k−1) × nₖ] ÷ (9 × M). 등급 간격을 동일하게
-          처리한 자체 요약이며, 높은 지수가 범죄 확률을 뜻하지 않습니다.
-          8~10등급 비중은 (n₈+n₉+n₁₀)/M, 등급별 분포는 nₖ/M, 판별 성공 비율은
-          M/T, 후보 중 미분류 비율은 U/(M+U)입니다. 비율은 %로 표시합니다. M은
-          판별 성공, U는 미분류, E는 미표시, T=M+U+E입니다. M=0이면
-          지수·분포·높은 등급 비중을 제공하지 않습니다. 아래 범위는 U를 모두
-          1등급 또는 모두 10등급으로 가정한 결과로, 신뢰구간이 아니며
-          오분류·공간 오차를 포함하지 않습니다. 지도는 생활안전지도 WMS를
-          표시하지만 계산은 별도의 가상 집계로 수행합니다. 실제 도로 길이·범죄
-          비율이 아니며, 공식 등급 방향·색상 매핑·이용 조건 검증 전 실제 이미지
-          분석은 미연결 상태입니다.
-        </p>
-        {['A', 'B'].map((slot) => (
-          <p key={slot}>
-            {slot} 미분류 조건부 지수 범위:{' '}
-            {formatNumber(result[slot].scoreBounds?.lower)}
-            {' ~ '}
-            {formatNumber(result[slot].scoreBounds?.upper)}
-          </p>
-        ))}
-        <p>
-          A − B 조건부 범위:{' '}
-          {formatNumber(result.comparison?.differenceBounds?.lower)}
-          {' ~ '}
-          {formatNumber(result.comparison?.differenceBounds?.upper)}
-        </p>
+        <div className={styles.analysisDetails}>
+          <section aria-label="계산식과 데이터 기준">
+            <h3>계산식과 데이터 기준</h3>
+            <p>색상 평균 지수 S = 100 × Σ[(k−1) × nₖ] ÷ (9 × M).</p>
+            <p>
+              범죄 유형별로 독립된 집계에 같은 산식을 적용합니다. 전체 점수는
+              개별 유형 점수의 합이나 평균이 아닙니다.
+            </p>
+            <p>
+              M은 판별 성공, U는 미분류, E는 미표시, T=M+U+E입니다. 지수가
+              높다고 실제 범죄 확률이 높다는 의미는 아닙니다.
+            </p>
+            <p>
+              판별 성공 비율은 M/T, 후보 중 미분류 비율은 U/(M+U), 등급별 분포는
+              nₖ/M입니다. 모두 %로 표시합니다.
+            </p>
+            <p>
+              M=0이면 지수·분포·높은 등급 비중을 제공하지 않습니다. 8등급 경계는
+              공식 위험 경계가 아닌 시험 기준입니다.
+            </p>
+          </section>
+          <div className={styles.detailsGrid}>
+            {['A', 'B'].map((slot) => {
+              const data = result[slot]
+              return (
+                <section key={slot} aria-label={`${slot} 전체 유형 분석 상세`}>
+                  <h3>{slot} 지점 · 전체 유형 분석 상세</h3>
+                  <dl className={styles.typeScores}>
+                    <div>
+                      <dt>판별 성공 비율 · 예시</dt>
+                      <dd>{formatNumber(data.displayRatio, '%')}</dd>
+                    </div>
+                    <div>
+                      <dt>후보 중 미분류 비율 · 예시</dt>
+                      <dd>{formatNumber(data.unclassifiedRatio, '%')}</dd>
+                    </div>
+                    <div>
+                      <dt>8~10등급 색상 비중 · 예시</dt>
+                      <dd>{formatNumber(data.highGradeRatio, '%')}</dd>
+                    </div>
+                  </dl>
+                  <p>
+                    유효 {data.valid ?? '없음'} / 전체 {data.total ?? '없음'}{' '}
+                    가상 픽셀 · 미분류 {data.unclassified ?? '없음'} · 미표시{' '}
+                    {data.unpainted ?? '없음'}
+                  </p>
+                  <h4>판별된 등급 픽셀 내 분포 · 예시</h4>
+                  <ol className={styles.gradeList}>
+                    {(data.distribution ?? []).map((value, index) => (
+                      <li key={index}>
+                        {index + 1}등급 <strong>{value.toFixed(1)}%</strong>
+                      </li>
+                    ))}
+                  </ol>
+                  <p>
+                    미분류 조건부 지수 범위:{' '}
+                    {formatNumber(data.scoreBounds?.lower)} ~{' '}
+                    {formatNumber(data.scoreBounds?.upper)}
+                  </p>
+                </section>
+              )
+            })}
+          </div>
+          <section aria-label="A/B 예시 지수 차이">
+            <h3>A/B 차이 · 예시</h3>
+            <p>
+              전체 유형 기준 A − B 색상 평균 지수:{' '}
+              {formatNumber(result.comparison?.scoreDifference)}
+            </p>
+            <p>
+              A − B 8~10등급 색상 비중:{' '}
+              {formatNumber(result.comparison?.highGradeDifference, '%p')}
+            </p>
+            <p>
+              양수는 A가 높고, 음수는 B가 높습니다. 실제 안전 우열을 뜻하지
+              않습니다.
+            </p>
+            {result.comparison?.directionMayChange && (
+              <p>
+                미분류 색상의 배정에 따라 지수 차이 방향이 바뀔 수 있습니다.
+              </p>
+            )}
+            <p>
+              A − B 조건부 범위:{' '}
+              {formatNumber(result.comparison?.differenceBounds?.lower)} ~{' '}
+              {formatNumber(result.comparison?.differenceBounds?.upper)}
+            </p>
+          </section>
+          <section aria-label="분석의 한계">
+            <h3>분석의 한계</h3>
+            <p>
+              조건부 범위는 미분류를 모두 1등급 또는 10등급으로 가정한 값으로
+              신뢰구간이 아닙니다. 오분류·공간 오차를 포함하지 않습니다.
+            </p>
+            <p>
+              지도는 생활안전지도 WMS를 표시하지만 점수는 별도의 가상 집계에서
+              계산합니다. 실제 이미지 분석·범죄 확률·도로 길이 비율이 아니며,
+              공식 등급 방향·색상 매핑·이용 조건은 검증이 필요합니다.
+            </p>
+          </section>
+        </div>
       </details>
-      <p className={styles.notice}>
-        가상 fixture · 실제 관측 기간 없음 · 조회 시각{' '}
-        {new Date(result.queriedAt).toLocaleString('ko-KR')} · {result.version}
-      </p>
     </dialog>
   )
 }

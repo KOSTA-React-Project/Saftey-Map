@@ -85,3 +85,9 @@
 .secondaryButton:hover {
   background: var(--color-surface);
 }
+
+@media (max-width: 1199px) {
+  .input {
+    font-size: var(--font-size-md);
+  }
+}

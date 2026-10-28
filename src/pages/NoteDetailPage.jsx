@@ -19,6 +19,7 @@ function NoteDetailPage() {
   return (
     <>
       <Sidebar
+        initialExpanded
         footer={
           <Link to={`${ROUTES.NOTES}/new`} className={styles.primaryButton}>
             작성하기
