@@ -4,6 +4,7 @@ import { fetchCrimeLegend } from '../../api/crimeApi.js'
 import { ROUTES } from '../../constants/routes.js'
 import { useMapLevel } from '../../hooks/useMap.js'
 import { MAX_LEVEL } from './CrimeLayer.jsx'
+import { NOTE_MARKER_MAX_LEVEL } from '../notes/NoteSpotMarkers.jsx'
 import {
   DEFAULT_CRIME_TYPE,
   findCrimeType,
@@ -20,6 +21,8 @@ function GradeLegend({ crimeType = DEFAULT_CRIME_TYPE }) {
   const layerHidden = level !== null && level > MAX_LEVEL
   // 비교 화면에는 안심노트 마커가 없어 범죄주의구간만 안내
   const showsNotes = !useMatch(ROUTES.COMPARE)
+  const notesHidden =
+    showsNotes && level !== null && level > NOTE_MARKER_MAX_LEVEL
 
   useEffect(() => {
     let active = true
@@ -62,6 +65,11 @@ function GradeLegend({ crimeType = DEFAULT_CRIME_TYPE }) {
         <p className={styles.notice} role="status">
           지도를 확대하면{' '}
           {showsNotes ? '범죄주의구간과 안심노트가' : '범죄주의구간이'} 보여요.
+        </p>
+      )}
+      {!layerHidden && notesHidden && (
+        <p className={styles.notice} role="status">
+          지도를 더 확대하면 안심노트가 보여요.
         </p>
       )}
       <p className={styles.source}>출처: 생활안전지도(경찰청)</p>
