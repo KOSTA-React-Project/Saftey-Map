@@ -197,7 +197,7 @@ const BUILDING_TONES = ['#f4f2ea', '#e9e6dc', '#efeee6', '#e2e3d9']
 
 // 안심노트 핀 위치 (핀 끝이 가리키는 점)
 const NOTE_PINS = [
-  [456, 150],
+  [480, 214],
   [300, 301],
 ]
 
@@ -242,6 +242,11 @@ const BRIDGES = [
   [475, 365, 496, 422, 12],
 ]
 
+// 핀 모양 (끝이 0,0), 말풍선 모양 (꼬리가 오른쪽 아래 핀 쪽을 가리킴)
+const PIN_PATH = 'M0 0C-13-17-20-26-20-35a20 20 0 0 1 40 0c0 9-7 18-20 35z'
+const BUBBLE_PATH =
+  'M0 0h120a10 10 0 0 1 10 10v44a10 10 0 0 1-10 10h-12l-14 16-4-16H10A10 10 0 0 1 0 54V10A10 10 0 0 1 10 0z'
+
 const pathOf = (points) =>
   points.map(([x, y], i) => `${i ? 'L' : 'M'}${x} ${y}`).join('')
 
@@ -254,6 +259,7 @@ function AuthIllustration({ className }) {
         className={styles.svg}
         viewBox="0 0 600 480"
         preserveAspectRatio="xMidYMid slice"
+        shapeRendering="geometricPrecision"
         aria-hidden="true"
       >
         <defs>
@@ -295,9 +301,6 @@ function AuthIllustration({ className }) {
             <stop offset="0.6" stopColor="#1e3c2a" stopOpacity="0" />
             <stop offset="1" stopColor="#1e3c2a" stopOpacity="0.14" />
           </radialGradient>
-          <filter id="auth-shadow" x="-20%" y="-20%" width="140%" height="160%">
-            <feDropShadow dx="0" dy="3" stdDeviation="3" floodOpacity="0.18" />
-          </filter>
         </defs>
 
         {/* 땅 */}
@@ -424,19 +427,14 @@ function AuthIllustration({ className }) {
           ))}
         </g>
 
-        {/* 범죄주의구간: 길 위에 등급 색을 겹쳐 칠함 */}
-        <g
-          fill="none"
-          strokeLinecap="round"
-          opacity="0.82"
-          style={{ mixBlendMode: 'multiply' }}
-        >
+        {/* 범죄주의구간: 흰 길과 같은 굵기로 칠해 길 밖으로 번지지 않게 */}
+        <g fill="none" strokeLinecap="round">
           {SEGMENTS.map(({ id, start, end, width }) => (
             <path
               key={id}
               d={pathOf([start, end])}
               stroke={`url(#${id})`}
-              strokeWidth={width + 6}
+              strokeWidth={width}
             />
           ))}
         </g>
@@ -444,10 +442,10 @@ function AuthIllustration({ className }) {
         {/* 가장자리 음영 */}
         <rect width="600" height="480" fill="url(#auth-vignette)" />
 
-        {/* 고른 지점(A)과 반경 */}
+        {/* 고른 지점(A)과 반경 — 그림자는 흐림 없이 살짝 비켜 그린 도형 */}
         <circle
-          cx="128"
-          cy="202"
+          cx="150"
+          cy="203"
           r="82"
           fill="var(--color-primary)"
           fillOpacity="0.1"
@@ -455,14 +453,14 @@ function AuthIllustration({ className }) {
           strokeDasharray="7 6"
           strokeWidth="2.5"
         />
+        <circle cx="152" cy="206" r="19" fill="#1e3c2a" opacity="0.18" />
         <circle
-          cx="128"
-          cy="202"
+          cx="150"
+          cy="203"
           r="17"
           fill="var(--color-primary)"
           stroke="var(--color-white)"
           strokeWidth="4"
-          filter="url(#auth-shadow)"
         />
 
         {/* 안심노트 핀 마커: 바닥 그림자 + 핀 */}
@@ -470,20 +468,31 @@ function AuthIllustration({ className }) {
           <g key={`${x}-${y}`} transform={`translate(${x} ${y})`}>
             <ellipse cy="2" rx="9" ry="3.5" fill="#1e3c2a" opacity="0.2" />
             <path
-              d="M0 0C-13-17-20-26-20-35a20 20 0 0 1 40 0c0 9-7 18-20 35z"
+              d={PIN_PATH}
+              transform="translate(3 3)"
+              fill="#1e3c2a"
+              opacity="0.18"
+            />
+            <path
+              d={PIN_PATH}
               fill="url(#auth-pin)"
               stroke="var(--color-white)"
               strokeWidth="3"
-              filter="url(#auth-shadow)"
             />
             <circle cy="-35" r="7" fill="var(--color-white)" />
           </g>
         ))}
 
         {/* 메모 말풍선 */}
-        <g transform="translate(450 18)" filter="url(#auth-shadow)">
+        <g transform="translate(392 20)">
           <path
-            d="M0 0h120a10 10 0 0 1 10 10v44a10 10 0 0 1-10 10H34l-14 14V64H10A10 10 0 0 1 0 54V10A10 10 0 0 1 10 0z"
+            d={BUBBLE_PATH}
+            transform="translate(0 3)"
+            fill="#1e3c2a"
+            opacity="0.12"
+          />
+          <path
+            d={BUBBLE_PATH}
             fill="var(--color-white)"
             stroke="var(--color-border)"
           />
