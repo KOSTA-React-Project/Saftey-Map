@@ -23,10 +23,13 @@ const ROADS = [
     width: 16,
     points: [
       [-10, 198, 0],
-      [120, 202, 3],
-      [250, 207, 5],
+      [120, 202, 2],
+      [250, 207, 6],
+      [306, 209, 6],
       [380, 211, 7],
+      [420, 212, 6],
       [480, 214, 4],
+      [538, 215, 3],
       [610, 217, 0],
     ],
   },
@@ -35,9 +38,11 @@ const ROADS = [
     points: [
       [244, -10, 0],
       [247, 100, 3],
+      [249, 154, 4],
       [250, 207, 6],
+      [252, 256, 5],
       [253, 300, 4],
-      [256, 372, 2],
+      [257, 394, 2],
       [260, 490, 0],
     ],
   },
@@ -47,7 +52,9 @@ const ROADS = [
       [372, -10, 0],
       [392, 90, 3],
       [420, 211, 6],
+      [440, 266, 8],
       [458, 318, 9],
+      [472, 358, 5],
       [485, 393, 3],
       [520, 490, 0],
     ],
@@ -57,9 +64,12 @@ const ROADS = [
     width: 8,
     points: [
       [-10, 100, 0],
-      [140, 98, 0],
-      [247, 100, 2],
+      [115, 98, 0],
+      [247, 100, 3],
+      [300, 96, 2],
       [392, 90, 3],
+      [440, 89, 2],
+      [526, 87, 1],
       [610, 86, 0],
     ],
   },
@@ -67,11 +77,13 @@ const ROADS = [
     width: 8,
     points: [
       [-10, 300, 0],
-      [130, 302, 3],
+      [126, 302, 3],
       [253, 300, 4],
       [360, 304, 6],
       [458, 318, 9],
-      [610, 330, 4],
+      [505, 322, 7],
+      [552, 325, 5],
+      [610, 330, 0],
     ],
   },
   {
@@ -79,7 +91,8 @@ const ROADS = [
     points: [
       [110, -10, 0],
       [115, 98, 0],
-      [120, 202, 1],
+      [118, 150, 0],
+      [120, 202, 2],
       [126, 302, 3],
       [129, 384, 0],
     ],
@@ -88,9 +101,11 @@ const ROADS = [
     width: 8,
     points: [
       [520, -10, 0],
-      [526, 86, 0],
-      [538, 214, 3],
-      [552, 324, 5],
+      [526, 87, 1],
+      [532, 148, 2],
+      [538, 215, 3],
+      [545, 270, 5],
+      [552, 325, 5],
       [559, 353, 0],
     ],
   },
@@ -102,10 +117,10 @@ const ROADS = [
       [60, 382, 0],
       [128, 384, 0],
       [200, 391, 0],
-      [258, 394, 0],
+      [257, 394, 2],
       [330, 386, 0],
-      [420, 366, 1],
-      [490, 356, 2],
+      [420, 366, 2],
+      [472, 358, 5],
       [558, 353, 0],
       [610, 357, 0],
     ],
@@ -124,15 +139,16 @@ const ROADS = [
     points: [
       [252, 256, 5],
       [372, 258, 8],
-      [440, 266, 10],
-      [545, 270, 6],
+      [440, 266, 8],
+      [494, 268, 10],
+      [545, 270, 5],
     ],
   },
   {
     width: 5,
     points: [
       [480, 214, 4],
-      [494, 262, 8],
+      [494, 268, 10],
       [505, 322, 7],
     ],
   },
@@ -148,13 +164,13 @@ const ROADS = [
     width: 5,
     points: [
       [300, 96, 2],
-      [306, 209, 5],
+      [306, 209, 6],
     ],
   },
   {
     width: 5,
     points: [
-      [440, 89, 0],
+      [440, 89, 2],
       [456, 150, 2],
       [532, 148, 2],
     ],
@@ -394,28 +410,7 @@ function AuthIllustration({ className }) {
           opacity="0.6"
         />
 
-        {/* 다리: 강물 위 그림자 → 난간 (길은 그 위에 그려짐) */}
-        {BRIDGES.map(({ road }) => {
-          const { points, width } = ROADS[road]
-          return (
-            <g key={road} fill="none" clipPath={`url(#auth-bridge-${road})`}>
-              <path
-                d={pathOf(points)}
-                transform="translate(4 5)"
-                stroke="#1e3c2a"
-                strokeOpacity="0.22"
-                strokeWidth={width + 6}
-              />
-              <path
-                d={pathOf(points)}
-                stroke="#8e9a8b"
-                strokeWidth={width + 6}
-              />
-            </g>
-          )
-        })}
-
-        {/* 길: 테두리 → 흰 길 */}
+        {/* 길: 모든 길 테두리 → 다리 난간 → 모든 흰 길 (교차로가 한 면으로 합쳐지게) */}
         <g fill="none" strokeLinecap="round" strokeLinejoin="round">
           {ROADS.map((road) => (
             <path
@@ -425,6 +420,30 @@ function AuthIllustration({ className }) {
               strokeWidth={road.width + 3}
             />
           ))}
+        </g>
+
+        {/* 다리: 강물 위 그림자 → 난간 (테두리를 덮고 흰 길 바로 옆에 붙음) */}
+        {BRIDGES.map(({ road }) => {
+          const { points, width } = ROADS[road]
+          return (
+            <g key={road} fill="none" clipPath={`url(#auth-bridge-${road})`}>
+              <path
+                d={pathOf(points)}
+                transform="translate(4 5)"
+                stroke="#1e3c2a"
+                strokeOpacity="0.22"
+                strokeWidth={width + 5}
+              />
+              <path
+                d={pathOf(points)}
+                stroke="#8e9a8b"
+                strokeWidth={width + 5}
+              />
+            </g>
+          )
+        })}
+
+        <g fill="none" strokeLinecap="round" strokeLinejoin="round">
           {ROADS.map((road) => (
             <path
               key={`road-${pathOf(road.points)}`}
