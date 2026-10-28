@@ -13,6 +13,7 @@ import { useApprovedNotes } from '../hooks/useApprovedNotes.js'
 import { useNoteSpots } from '../hooks/useNoteSpots.js'
 import NoteSpotMarkers from '../components/notes/NoteSpotMarkers.jsx'
 import NoteSpotPanel from '../components/notes/NoteSpotPanel.jsx'
+import PointScorePanel from '../components/explore/PointScorePanel.jsx'
 import styles from './ExplorePage.module.css'
 
 const RADIUS_OPTIONS = [
@@ -30,6 +31,8 @@ function ExplorePage() {
   // 처음엔 중심 없음. 지도 클릭·검색으로 정해짐
   const [pointA, setPointA] = useState(null)
   const [radius, setRadius] = useState(500)
+  // '이 위치로 분석하기'를 누르면 왼쪽 패널이 분석 결과로 바뀜
+  const [scoreOpen, setScoreOpen] = useState(false)
   const navigate = useNavigate()
 
   // 검색한 곳으로 지도를 옮기고 중심도 그곳으로
@@ -70,8 +73,8 @@ function ExplorePage() {
   return (
     <>
       <Sidebar
-        key={noteSpots.isOpen ? 'detail' : 'overview'}
-        initialExpanded={noteSpots.isOpen}
+        key={noteSpots.isOpen ? 'detail' : scoreOpen ? 'score' : 'overview'}
+        initialExpanded={noteSpots.isOpen || scoreOpen}
       >
         {noteSpots.isOpen ? (
           <NoteSpotPanel
@@ -80,6 +83,15 @@ function ExplorePage() {
             onOpenNote={noteSpots.openNote}
             onBack={noteSpots.backToList}
             onClose={noteSpots.close}
+          />
+        ) : scoreOpen && pointA ? (
+          <PointScorePanel
+            key={`${pointA.lat},${pointA.lng},${radius}`}
+            point={pointA}
+            address={location?.address}
+            radius={radius}
+            crimeType={crimeType}
+            onBack={() => setScoreOpen(false)}
           />
         ) : (
           <>
@@ -109,6 +121,14 @@ function ExplorePage() {
               onClick={goCompare}
             >
               이 위치로 비교하기
+            </button>
+            <button
+              type="button"
+              className={styles.compareButton}
+              disabled={!pointA}
+              onClick={() => setScoreOpen(true)}
+            >
+              이 위치로 분석하기
             </button>
 
             <div className={styles.sectionHeader}>
