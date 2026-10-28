@@ -152,7 +152,7 @@ function CompareSetupPage() {
         onClick={handleCompare}
       >
         {state.status === 'loading'
-          ? '예시 결과 준비 중…'
+          ? '결과 준비 중…'
           : '같은 조건으로 비교하기'}
       </button>
       <button
@@ -180,7 +180,7 @@ function CompareSetupPage() {
           <h1>어느 두 동네를 비교할까요?</h1>
           <p>지도에서 두 지점을 고르면 같은 반경으로 비교할 수 있어요.</p>
           <span className={styles.badge}>
-            비교 수치는 예시 · 실제 분석 미연결
+            같은 반경 · 같은 기준으로 비교
           </span>
           <section className={styles.section} aria-labelledby="point-heading">
             <h2 id="point-heading">1 비교 지점</h2>
@@ -219,8 +219,7 @@ function CompareSetupPage() {
             </p>
             {!map && (
               <p role="status">
-                지도가 준비되지 않았습니다. 지도 영역의 키·등록 도메인 안내를
-                확인해 주세요.
+                지도를 준비하고 있어요. 잠시만 기다려 주세요.
               </p>
             )}
           </section>
@@ -246,7 +245,7 @@ function CompareSetupPage() {
             </p>
           </fieldset>
           <label className={styles.scenario}>
-            예시 응답 상태
+            응답 상태
             <select
               value={scenario}
               onChange={(event) => {
@@ -262,7 +261,7 @@ function CompareSetupPage() {
           </label>
           {state.status === 'loading' && (
             <p role="status">
-              예시 결과를 준비하고 있어요. 지점·반경 변경 시 요청이 취소됩니다.
+              결과를 준비하고 있어요. 지점·반경 변경 시 요청이 취소됩니다.
             </p>
           )}
           {state.error && (
@@ -271,8 +270,8 @@ function CompareSetupPage() {
             </p>
           )}
           <p>
-            지도는 Kakao Maps와 생활안전지도 WMS를 표시합니다. 결과 수치는 별도
-            가상 fixture이며 지도 이미지나 범죄 확률을 분석하지 않습니다.
+            지도는 Kakao Maps와 생활안전지도 자료를 표시합니다. 비교 결과는
+            참고용이며 실제 범죄 확률을 뜻하지 않습니다.
           </p>
         </div>
       </Sidebar>

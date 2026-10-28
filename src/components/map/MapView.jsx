@@ -21,7 +21,7 @@ function loadKakaoSdk() {
     }
 
     if (!key) {
-      fail('.env에 VITE_KAKAO_MAP_KEY가 없어요.')
+      fail('지도를 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.')
       return
     }
 
@@ -29,14 +29,14 @@ function loadKakaoSdk() {
     script.onload = () => {
       if (!window.kakao?.maps?.load) {
         fail(
-          '카카오 지도를 불러오지 못했어요. 키와 등록 도메인을 확인해 주세요.',
+          '지도를 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.',
         )
         return
       }
       window.kakao.maps.load(() => resolve(window.kakao))
     }
     script.onerror = () =>
-      fail('카카오 지도를 불러오지 못했어요. 키와 등록 도메인을 확인해 주세요.')
+      fail('지도를 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.')
     document.head.append(script)
   })
 
