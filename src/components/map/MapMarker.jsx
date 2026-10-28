@@ -3,10 +3,10 @@ import { createPortal } from 'react-dom'
 import { useMap } from '../../hooks/useMap.js'
 import styles from './MapMarker.module.css'
 
-const LABELS = { A: 'A', B: 'B', note: '+', new: 'N' }
+const LABELS = { A: 'A', B: 'B', note: '1', new: 'N' }
 
 // type: 'A' | 'B' | 'note'(안심노트) | 'new'(작성 중 위치)
-// count: 같은 자리에 겹친 개수. 2 이상이면 기호 대신 숫자로 표시
+// count: 같은 자리에 겹친 개수. 안심노트는 1개도 숫자 1로 표시
 function MapMarker({
   type = 'note',
   position,
