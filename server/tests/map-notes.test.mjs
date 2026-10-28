@@ -26,12 +26,21 @@ function installKakao() {
     }
   }
   class Map {
+    constructor() {
+      this.level = 4
+      this.listeners = {}
+      window.testNoteMap = this
+    }
     setDraggable() {}
     setZoomable() {}
     relayout() {}
     panTo() {}
     getLevel() {
-      return 4
+      return this.level
+    }
+    setLevel(level) {
+      this.level = level
+      for (const handler of [...(this.listeners.zoom_changed ?? [])]) handler()
     }
   }
   window.kakao = {
@@ -61,7 +70,16 @@ function installKakao() {
       Circle: class {
         setMap() {}
       },
-      event: { addListener() {}, removeListener() {} },
+      event: {
+        addListener(map, name, handler) {
+          ;(map.listeners[name] ??= []).push(handler)
+        },
+        removeListener(map, name, handler) {
+          map.listeners[name] = (map.listeners[name] ?? []).filter(
+            (fn) => fn !== handler,
+          )
+        },
+      },
       services: { Geocoder: class {}, Places: class {} },
     },
   }
@@ -159,6 +177,22 @@ test('조회 버튼 없이 메인 지도에 승인 노트 표시, 마커 클릭�
     await overlays.first().locator('..').getAttribute('data-longitude'),
     '126.978',
   )
+  // 100m 축척(4)에서 보이고 250m 축척(5)에서는 사라진 뒤 다시 표시된다.
+  await page.evaluate(() => window.testNoteMap.setLevel(5))
+  await overlays.first().waitFor({ state: 'detached' })
+  await page
+    .getByText('지도를 더 확대하면 안심노트가 보여요.', { exact: true })
+    .waitFor()
+  await page.evaluate(() => window.testNoteMap.setLevel(4))
+  await overlays.first().waitFor()
+  assert.equal(
+    await page
+      .getByText('지도를 더 확대하면 안심노트가 보여요.', { exact: true })
+      .count(),
+    0,
+  )
+  await page.evaluate(() => window.testNoteMap.setLevel(3))
+  assert.equal(await overlays.count(), 1)
   await overlays.first().click()
   assert.equal(new URL(page.url()).pathname, '/')
   await page
