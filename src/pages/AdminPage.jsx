@@ -296,7 +296,7 @@ function AdminPage() {
                       <tbody>
                         {data.items.map((item) => (
                           <tr key={item.id}>
-                            <td>
+                            <td data-label="제목">
                               <button
                                 type="button"
                                 className={styles.titleButton}
@@ -309,18 +309,18 @@ function AdminPage() {
                                 {item.title}
                               </button>
                             </td>
-                            <td>
+                            <td data-label="작성자">
                               {item.authorName ||
                                 (item.authorId != null
                                   ? `회원 #${item.authorId}`
                                   : '작성자 정보 없음')}
                             </td>
-                            <td>{item.tag}</td>
-                            <td>{item.observedDate}</td>
-                            <td>
+                            <td data-label="태그">{item.tag}</td>
+                            <td data-label="관찰일">{item.observedDate}</td>
+                            <td data-label="작성 시각">
                               {new Date(item.createdAt).toLocaleString('ko-KR')}
                             </td>
-                            <td>
+                            <td data-label="상태">
                               <span
                                 className={`${styles.badge} ${styles[item.status]}`}
                               >

@@ -16,6 +16,8 @@ function NotePage() {
   return (
     <>
       <Sidebar
+        key={noteSpots.isOpen ? 'detail' : 'overview'}
+        initialExpanded={noteSpots.isOpen}
         footer={
           <Link to={`${ROUTES.NOTES}/new`} className={styles.primaryButton}>
             작성하기
