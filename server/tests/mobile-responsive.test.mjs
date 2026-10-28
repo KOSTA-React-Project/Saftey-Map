@@ -214,6 +214,8 @@ test('390px·태블릿·1440px: 패널/메뉴/입력/비교 모달/관리자 카
     exact: true,
   })
   await compare.waitFor()
+  assert.match(await page.locator('aside').innerText(), /좌표와 반경으로 생성한 가상 집계/)
+  assert.match(await page.locator('aside').innerText(), /지도 자료나 지도 이미지를\s*분석한 결과가 아닙니다/)
   await page.screenshot({ path: '/tmp/ansim-responsive-setup.png' })
   await compare.click().catch(async (error) => {
     throw new Error(

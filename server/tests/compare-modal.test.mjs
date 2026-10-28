@@ -99,6 +99,8 @@ test('비교 모달은 새 지표·차이·무자료 상태를 표시하고 모�
     /판별 성공 비율|후보 중 미분류 비율|1등급/,
   )
   await details.locator('summary').click()
+  assert.match(await details.innerText(), /좌표와 반경으로\s*생성한 가상 집계/)
+  assert.match(await details.innerText(), /지도 자료나 지도 이미지를 분석한\s*결과가 아닙니다/)
   const diagnostics = details.getByRole('region', {
     name: 'A 전체 유형 분석 상세',
   })
