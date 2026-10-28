@@ -62,19 +62,6 @@ function AuthIllustration({ className }) {
         preserveAspectRatio="xMidYMid slice"
         aria-hidden="true"
       >
-        <defs>
-          {/* 범죄주의구간 색이 길 주변으로 번져 보이게 */}
-          <filter
-            id="auth-crime-glow"
-            x="-10%"
-            y="-10%"
-            width="120%"
-            height="120%"
-          >
-            <feGaussianBlur stdDeviation="4" />
-          </filter>
-        </defs>
-
         {/* 바탕, 공원, 강 */}
         <rect width="600" height="480" fill="#e4eae0" />
         <path d="M20 20h80v70H20zM140 330h90v120h-90z" fill="#b3d7aa" />
@@ -93,18 +80,13 @@ function AuthIllustration({ className }) {
         </g>
 
         {/* 범죄주의구간: 길을 따라 등급 색 */}
-        <g
-          fill="none"
-          strokeLinecap="round"
-          opacity="0.8"
-          filter="url(#auth-crime-glow)"
-        >
+        <g fill="none" strokeLinecap="round" opacity="0.9">
           {ROADS.map(([d, width, grade]) => (
             <path
               key={d}
               d={d}
               stroke={GRADE_COLORS[grade - 1]}
-              strokeWidth={width + 10}
+              strokeWidth={width + 4}
             />
           ))}
         </g>
