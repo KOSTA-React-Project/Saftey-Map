@@ -43,8 +43,12 @@ function ResultMap({ point, radius, crimeType }) {
   )
 }
 
-// 서버 설정이 필요한 오류 — 다시 시도해도 결과가 같음
-const SETUP_ERRORS = ['ANALYSIS_NOT_VERIFIED', 'SOURCE_NOT_CONFIGURED']
+// 서버 설정이 필요하거나 입력(국내 좌표·반경)이 잘못된 오류 — 다시 시도해도 결과가 같음
+const SETUP_ERRORS = [
+  'ANALYSIS_NOT_VERIFIED',
+  'SOURCE_NOT_CONFIGURED',
+  'INVALID_CONDITIONS',
+]
 
 function formatNumber(value, suffix = '') {
   return Number.isFinite(value) ? `${value.toFixed(1)}${suffix}` : '분석 불가'

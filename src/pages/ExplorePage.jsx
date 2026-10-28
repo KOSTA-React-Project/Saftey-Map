@@ -55,6 +55,7 @@ function ExplorePage() {
   const clearPointA = () => {
     setPlace(null)
     setPointA(null)
+    setScoreOpen(false)
     searchBoxProps.onValueChange('')
   }
 
@@ -182,7 +183,14 @@ function ExplorePage() {
           </>
         )}
       </Sidebar>
-      <NoteSpotMarkers spots={noteSpots.spots} onSelect={noteSpots.openSpot} />
+      {/* 노트를 열면 지점 분석 패널은 닫음 (돌아올 때 자동으로 다시 분석하지 않게) */}
+      <NoteSpotMarkers
+        spots={noteSpots.spots}
+        onSelect={(...args) => {
+          setScoreOpen(false)
+          noteSpots.openSpot(...args)
+        }}
+      />
       <MapMarker
         type="A"
         position={pointA}
