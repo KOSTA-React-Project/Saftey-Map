@@ -284,7 +284,8 @@ function AdminPage() {
                       <thead>
                         <tr>
                           <th>제목</th>
-                          <th>작성자</th>
+                          <th>이메일</th>
+                          <th>닉네임</th>
                           <th>태그</th>
                           <th>관찰일</th>
                           <th>작성 시각</th>
@@ -307,12 +308,8 @@ function AdminPage() {
                                 {item.title}
                               </button>
                             </td>
-                            <td data-label="작성자">
-                              {item.authorName ||
-                                (item.authorId != null
-                                  ? `회원 #${item.authorId}`
-                                  : '작성자 정보 없음')}
-                            </td>
+                            <td data-label="이메일">{item.authorEmail || '정보 없음'}</td>
+                            <td data-label="닉네임">{item.authorNickname || '정보 없음'}</td>
                             <td data-label="태그">{item.tag}</td>
                             <td data-label="관찰일">{item.observedDate}</td>
                             <td data-label="작성 시각">
